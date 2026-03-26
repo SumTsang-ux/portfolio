@@ -1,0 +1,58 @@
+/*
+
+Master slider skin custom style 1
+
+*/
+
+.ms-skin-custom-style-1 .ms-nav-next, .ms-skin-custom-style-1 .ms-nav-prev{
+    right: 0;
+    left: auto;
+    width: 55px;
+    height: 30px;
+    opacity: 0.85;
+    -webkit-transition: all 0.2s ease 0s;
+    -moz-transition: all 0.2s ease 0s;
+    -o-transition: all 0.2s ease 0s;
+    -ms-transition: all 0.2s ease 0s;
+    transition: all 0.2s ease 0s;
+}
+.ms-skin-custom-style-1 .ms-nav-next:hover, .ms-skin-custom-style-1 .ms-nav-prev:hover {
+    opacity: 1;
+    width: 100px;
+}
+.ms-skin-custom-style-1 .ms-nav-next {
+    margin-top: -31px;
+    background: #232327 url(next-arrow.svg) no-repeat;
+    background-position: right 17px center;
+}
+.ms-skin-custom-style-1 .ms-nav-next:before,
+.ms-skin-custom-style-1 .ms-nav-prev:before {
+    animation: animSideNav 0.1s forwards;
+    animation-delay: 0.1s;
+    opacity: 0;
+    transform: translate(0, 0);
+    -webkit-transform: translate(0, 0);
+    -moz-transform: translate(0, 0);
+    -ms-transform: translate(0, 0);
+}
+.ms-skin-custom-style-1 .ms-nav-next:hover:before,
+.ms-skin-custom-style-1 .ms-nav-prev:hover:before{
+    position: absolute;
+    top: 5px;
+    left: 20px;
+    color: #dddddd;
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+.ms-skin-custom-style-1 .ms-nav-next:hover:before {
+    content:"Next";
+}
+.ms-skin-custom-style-1 .ms-nav-prev:hover:before {
+    content:"Prev";
+}
+.ms-skin-custom-style-1 .ms-nav-prev {
+    margin-top: 0px;
+    background: #232327 url(prev-arrow.svg) no-repeat;
+    background-position: right 17px center;
+}
