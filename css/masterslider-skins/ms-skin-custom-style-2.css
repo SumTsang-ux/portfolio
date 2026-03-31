@@ -1,0 +1,40 @@
+/*
+
+Master slider skin custom style 2
+
+*/
+
+.ms-skin-custom-style-2 .ms-nav-next, .ms-skin-custom-style-2 .ms-nav-prev{ 
+    right: 390px;
+    left: auto;
+    width: 50px;
+    height: 50px;
+    opacity: 0.85;
+    -webkit-transition: all 0.2s ease 0s;
+    -moz-transition: all 0.2s ease 0s;
+    -o-transition: all 0.2s ease 0s;
+    -ms-transition: all 0.2s ease 0s;
+    transition: all 0.2s ease 0s;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+   background-color: transparent;
+}
+.ms-skin-custom-style-2 .ms-nav-next:hover, .ms-skin-custom-style-2 .ms-nav-prev:hover {
+    opacity: 1;
+}
+.ms-skin-custom-style-2 .ms-nav-next {
+    margin-top: 25px;
+    background: transparent url(next-arrow-style-2.svg) no-repeat;
+    background-position: center;
+}
+.ms-skin-custom-style-2 .ms-nav-prev {
+    margin-top: -40px;
+    background: transparent url(prev-arrow-style-2.svg) no-repeat;
+    background-position: center;
+}
+.ms-skin-custom-style-2 .ms-nav-next:hover:before,
+.ms-skin-custom-style-2 .ms-nav-prev:hover:before {
+   display: none;
+}

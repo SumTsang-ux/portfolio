@@ -1,0 +1,66 @@
+/* STANDARD HEADER ITEMS */
+
+
+
+.header-light-dark-current .navbar-default .navbar-nav>li>a:hover,
+.header-dark-default .navbar-default .navbar-nav>li>a:hover,
+
+.header-light-default .navbar-default .navbar-nav>li.current-menu-item>a,
+
+.header-light-default .navbar-default .navbar-nav>li>a:hover,
+.header-light-default .navbar-nav>li>a:before,
+.header-light-darker .navbar-default .navbar-nav>li.current-menu-item>a,
+.header-light-darker .navbar-default .navbar-nav>li>a:before{
+    color: #fff;
+}
+
+ .header-dark-default.header-transparent .navbar-default .navbar-nav>li>a:focus,
+.header-wrapper.header-transparent.header-light-theme-color .main-nav .navbar-default .navbar-nav>li>a,
+.header-light-default .navbar-default .navbar-nav>li>a,
+
+.header-light-dark-current .navbar-default .navbar-nav>li>a {
+    color: #eee;
+}
+
+.header-dark-default .navbar-default .navbar-nav>li>a, .header-dark-default .navbar-default .navbar-nav>li>a:focus,
+.header-wrapper.resize-header.header-dark-default .main-nav .navbar-default .navbar-nav>li>a,
+.navbar-default .navbar-nav>li>a,
+.header-dark-theme-color .navbar-default .navbar-nav>li>a, .header-dark-theme-color .navbar-default .navbar-nav>li>a:focus,
+ .header-light-dark-current.resize-header .navbar-default .navbar-nav>li>a,
+.header-wrapper.header-transparent.header-light-default.resize-header .navbar-default .navbar-nav>li>a,
+.header-wrapper.header-transparent.header-light-theme-color.resize-header .main-nav .navbar-default .navbar-nav>li>a,
+.header-dark-default .navbar-default .navbar-nav > li.current-menu-item > a,
+.header-light-default .navbar-default .navbar-nav>li>a:focus,
+.header-dark-default #header .navbar-default .navbar-nav > li >a:focus,
+.header-light-darker .navbar-default .navbar-nav>li>a:focus,
+.header-light-dark-current .navbar-default .navbar-nav>li>a:focus{
+    color: #aaa;
+}
+
+.header-light-darker .navbar-default .navbar-nav>li>a{
+    color: #6D7274;
+}
+.header-wrapper.resize-header.header-dark-default .navbar-default .navbar-nav>li>a:hover,
+.header-wrapper.resize-header.header-dark-default .navbar-default .navbar-nav>li>a:focus,
+.header-wrapper.resize-header.header-dark-default .navbar-default .navbar-nav>li>a:before,
+.header-wrapper.header-light-dark-current .navbar-default .megamenu> li ul > li > a:hover,
+.header-wrapper.header-light-dark-current .navbar-default .megamenu> li ul > li > a:focus,
+.header-light-default.resize-header .navbar-default .navbar-nav>li>a:focus,
+.header-light-default.resize-header .navbar-default .navbar-nav>li>a:hover,
+.header-light-default.resize-header .navbar-nav>li>a:before,
+.header-light-darker.resize-header .navbar-default .navbar-nav>li.current-menu-item>a,
+.header-light-darker.resize-header .navbar-default .navbar-nav>li>a:before,
+.header-light-dark-current .navbar-default .navbar-nav>li:hover>a,
+.header-light-dark-current .navbar-default .navbar-nav>li.current-menu-item>a{
+    color: #303136 !important;
+}
+
+
+/*  HAMBURGER MENU ITEMS */
+
+.header-wrapper.hamburger-menu.hamburger-menu-light .fat-nav li a {
+    color: #fff;
+}
+.header-wrapper.hamburger-menu.hamburger-menu-dark .fat-nav li a {
+    color: #303136;
+}
