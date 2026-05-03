@@ -1,286 +1,143 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>S&P 500 Danger 偵測工具 (Index Only)</title>
-  <style>
-    :root {
-      --bg:#0b1220; --card:#111b33; --text:#e8f0ff;
-      --ok:#38d39f; --danger:#ff4d4d; --warn:#ffcc33; --muted:#9fb0d0;
-      --border:#233052;
-    }
-    body { background:var(--bg); color:var(--text); font-family:sans-serif; padding:20px; }
-    .card { background:var(--card); border-radius:12px; padding:20px; border:1px solid var(--border); max-width:1100px; margin:auto; }
-    .controls { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
-    input, select { padding:12px; background:#0b1220; color:white; border:1px solid var(--border); border-radius:8px; }
-    input { flex:1; min-width:220px; }
-    button { background:var(--ok); color:#0b1220; font-weight:bold; cursor:pointer; border:none; padding:12px 22px; border-radius:8px; }
-    table { width:100%; margin-top:18px; border-collapse:collapse; }
-    th, td { padding:12px; text-align:left; border-bottom:1px solid var(--border); font-size:13px; vertical-align:top; }
-    .tag { padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; display:inline-block; color:#000; }
-    .pill-danger { background: var(--danger); color:#000; }
-    .pill-med { background: var(--warn); color:#000; }
-    .pill-low { background: #6ea8ff; color:#000; }
-    #status { margin-top:10px; text-align:center; color:var(--warn); font-size:13px; }
-    .muted { color: var(--muted); font-size:13px; line-height:1.5; margin-top:10px; }
-    .kvs { display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; }
-    .kv { background:#0b1220; border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
-    .kv b { display:block; font-size:14px; }
-    .kv span { color:var(--muted); font-size:12px; }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S&P 500 Danger 偵測工具 (Stooq 直接連線版)</title>
+    <style>
+        :root {
+            --bg:#0b1220; --card:#111b33; --text:#e8f0ff;
+            --ok:#38d39f; --danger:#ff4d4d; --warn:#ffcc33; --muted:#9fb0d0;
+            --border:#233052;
+        }
+        body { background:var(--bg); color:var(--text); font-family:sans-serif; padding:20px; }
+        .card { background:var(--card); border-radius:12px; padding:20px; border:1px solid var(--border); max-width:1100px; margin:auto; }
+        .controls { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+        input { padding:12px; background:#0b1220; color:white; border:1px solid var(--border); border-radius:8px; flex:1; min-width:220px; }
+        button { background:var(--ok); color:#0b1220; font-weight:bold; cursor:pointer; border:none; padding:12px 22px; border-radius:8px; }
+        table { width:100%; margin-top:18px; border-collapse:collapse; }
+        th, td { padding:12px; text-align:left; border-bottom:1px solid var(--border); font-size:13px; }
+        .tag { padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; display:inline-block; color:#000; margin-right:4px;}
+        .pill-danger { background: var(--danger); }
+        .pill-med { background: var(--warn); }
+        .pill-low { background: #6ea8ff; }
+        #status { margin-top:10px; text-align:center; color:var(--warn); font-size:13px; }
+        .muted { color: var(--muted); font-size:13px; line-height:1.5; }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h2 style="margin-top:0;">🚀 S&P 500 Danger 偵測工具（Index Only）</h2>
-    <div class="muted">
-      只使用 S&P 500 指數 OHLCV（^GSPC）。不包含成份股資料，因此不會有「成份股比例背馳」那種依賴外部成份資料的 bug。
+    <div class="card">
+        <h2 style="margin-top:0;">🛡️ S&P 500 指數偵測 (無 Proxy 安全版)</h2>
+        <div class="muted">數據直接由 Stooq 提供，不經過任何中間服務器。請輸入代號 (如 ^SPX)。</div>
+        <div class="controls">
+            <input id="symbol" type="text" value="^SPX" placeholder="例如 ^SPX, ^NDQ" />
+            <button type="button" onclick="startDetection()">開始分析</button>
+        </div>
+        <div id="status">準備就緒</div>
     </div>
 
-    <div class="controls">
-      <input id="symbol" type="text" value="^GSPC" />
-      <button type="button" id="btn">執行偵測</button>
-
-      <select id="window">
-        <option value="2mo" selected>最近 2 個月</option>
-        <option value="3mo">最近 3 個月</option>
-        <option value="6mo">最近 6 個月</option>
-      </select>
-    </div>
-
-    <div class="kvs">
-      <div class="kv"><b>Danger 規則</b><span>可在程式內調閾值</span></div>
-      <div class="kv"><b>輸出</b><span>每個交易日的風險等級</span></div>
-    </div>
-
-    <div id="status">準備就緒</div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>日期</th>
-        <th>收盤</th>
-        <th>當日漲跌%</th>
-        <th>成交量(M)</th>
-        <th>訊號</th>
-        <th>危險等級</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
+    <table>
+        <thead>
+            <tr>
+                <th>日期</th>
+                <th>收盤價</th>
+                <th>漲跌%</th>
+                <th>成交量</th>
+                <th>訊號</th>
+                <th>危險等級</th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
 
 <script>
-  const CONFIG = {
-    // MA periods
-    smaFast: 50,
-    smaSlow: 200,
+    // 1. 回調函數：Stooq 獲取資料後會自動跑這裡
+    function onStooqData(json) {
+        const status = document.getElementById("status");
+        const tbody = document.getElementById("tbody");
 
-    // Distribution Day (index-only approximation)
-    distDropPct: -0.2,      // close drop threshold (%)
-    distVolFactor: 1.00,    // volume > prevVol * factor
+        if (!json || json.length < 5) {
+            status.innerText = "❌ 數據讀取失敗，請檢查代號是否正確。";
+            return;
+        }
 
-    // Sudden drop
-    suddenBearPct: -3.0,    // bearish day threshold (%)
+        // Stooq 回傳格式: [Date, Open, High, Low, Close, Volume]
+        // 偵測邏輯
+        let html = "";
+        let results = [];
 
-    // Climax run-ish
-    climaxLookback: 20,     // lookback window to find "prior upswing"
-    climaxUpPct: 5.0,       // prior upswing total >= this (%)
-    climaxDropPct: -2.5     // climax down day threshold (%)
-  };
+        // 從舊到新計算
+        for (let i = 1; i < json.length; i++) {
+            const curr = json[i];
+            const prev = json[i-1];
+            
+            const date = curr[0];
+            const close = parseFloat(curr[4]);
+            const prevClose = parseFloat(prev[4]);
+            const vol = parseInt(curr[5]);
+            const prevVol = parseInt(prev[5]);
 
-  function cleanSymbol(input) {
-    let sym = String(input || "").trim().toUpperCase();
-    if (sym === "^SPX") sym = "^GSPC";
-    return sym;
-  }
+            const change = ((close - prevClose) / prevClose) * 100;
+            let signals = [];
+            let score = 0;
 
-  function sma(values, period) {
-    const out = new Array(values.length).fill(NaN);
-    let sum = 0;
-    for (let i = 0; i < values.length; i++) {
-      sum += values[i];
-      if (i >= period) sum -= values[i - period];
-      if (i >= period - 1) out[i] = sum / period;
-    }
-    return out;
-  }
+            // 規則 A: 出貨日 (價跌 > 0.2% 且 量增)
+            if (change < -0.2 && vol > prevVol) {
+                signals.push("Distribution Day");
+                score += 1;
+            }
 
-  function pct(a, b) {
-    // (a-b)/b * 100 ; b must not be 0
-    if (!isFinite(a) || !isFinite(b) || b === 0) return NaN;
-    return ((a - b) / b) * 100;
-  }
+            // 規則 B: 重挫 (價跌 > 2.0%)
+            if (change < -2.0) {
+                signals.push("Sudden Bear");
+                score += 2;
+            }
 
-  function dangerLabel(score) {
-    if (score >= 3) return { text: "Danger", cls: "pill-danger" };
-    if (score >= 2) return { text: "Medium", cls: "pill-med" };
-    return { text: "Low", cls: "pill-low" };
-  }
+            let label = { text: "Low", cls: "pill-low" };
+            if (score >= 3) label = { text: "Danger", cls: "pill-danger" };
+            else if (score >= 1) label = { text: "Medium", cls: "pill-med" };
 
-  async function fetchCSV(sym, range) {
-    const url = `https://query1.finance.yahoo.com/v7/finance/download/${encodeURIComponent(sym)}?range=${encodeURIComponent(range)}&interval=1d&events=history&includeAdjustedClose=true`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            results.push({ date, close, change, vol, signals, label });
+        }
 
-    const resp = await fetch(proxyUrl, { method: "GET" });
-    if (!resp.ok) throw new Error(`Proxy HTTP ${resp.status}`);
-    const json = await resp.json();
-    if (!json.contents) throw new Error("No CSV contents returned.");
-    return json.contents;
-  }
+        // 倒序顯示 (最新日期在前)
+        results.reverse();
 
-  function parseYahooCSV(csvText) {
-    const lines = String(csvText).trim().split("\n");
-    if (lines.length < 2) throw new Error("CSV too short.");
+        tbody.innerHTML = results.map(r => `
+            <tr>
+                <td>${r.date}</td>
+                <td>${r.close.toFixed(2)}</td>
+                <td style="color:${r.change < 0 ? 'var(--danger)' : 'var(--ok)'}">${r.change.toFixed(2)}%</td>
+                <td>${(r.vol / 1000000).toFixed(2)}M</td>
+                <td>${r.signals.map(s => `<span class="tag pill-med">${s}</span>`).join("")}</td>
+                <td><span class="tag ${r.label.cls}">${r.label.text}</span></td>
+            </tr>
+        `).join("");
 
-    const rows = [];
-    // Header then data
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(",");
-      // Date,Open,High,Low,Close,Adj Close,Volume
-      const date = cols[0];
-      const close = parseFloat(cols[4]);
-      const volume = parseInt(cols[6], 10);
-
-      // Some rows may contain "null"
-      if (!date || !isFinite(close) || !isFinite(volume)) continue;
-
-      // Build row with placeholder for prev-dependent calc later
-      rows.push({ date, close, volume });
-    }
-    return rows;
-  }
-
-  function detectSignals(rows) {
-    const closes = rows.map(r => r.close);
-    const vols = rows.map(r => r.volume);
-
-    const smaFastArr = sma(closes, CONFIG.smaFast);
-    const smaSlowArr = sma(closes, CONFIG.smaSlow);
-
-    const results = [];
-
-    for (let i = 1; i < rows.length; i++) {
-      const prevClose = closes[i-1];
-      const prevVol = vols[i-1];
-
-      const dayPct = pct(closes[i], prevClose);
-      if (!isFinite(dayPct)) continue;
-
-      const vNow = vols[i];
-      const vPrevOk = isFinite(prevVol) && vNow > prevVol * CONFIG.distVolFactor;
-
-      const signals = [];
-      let score = 0;
-
-      // 1) Distribution Day risk (approx)
-      const distOk = (dayPct < CONFIG.distDropPct) && vPrevOk;
-      if (distOk) {
-        signals.push("Distribution Day");
-        score += 1;
-      }
-
-      // Optional MA filter: count only if below/above a MA (reduce noise)
-      // Here: if below 50SMA, add extra weight. You can remove this if you want.
-      const smaFastVal = smaFastArr[i];
-      const maBias = isFinite(smaFastVal) && closes[i] < smaFastVal;
-      if (distOk && maBias) {
-        score += 1;
-      }
-
-      // 2) Sudden drop
-      const suddenOk = dayPct <= CONFIG.suddenBearPct;
-      if (suddenOk) {
-        signals.push("Sudden Bear");
-        score += 2; // this is serious
-      }
-
-      // 3) Climax Run-ish
-      // Detect prior upswing within lookback, then today is large down
-      let climaxOk = false;
-      if (i >= CONFIG.climaxLookback) {
-        const pastIdx = i - CONFIG.climaxLookback;
-        const up = pct(closes[i], closes[pastIdx]); // rise over lookback to today
-        // But climax usually: price ran up before then dumped today.
-        // We approximate by: if in last lookback we are up enough, and today is down enough.
-        const downToday = dayPct <= CONFIG.climaxDropPct;
-        climaxOk = isFinite(up) && up >= CONFIG.climaxUpPct && downToday;
-      }
-      if (climaxOk) {
-        signals.push("Climax Run");
-        score += 2;
-      }
-
-      const label = dangerLabel(score);
-
-      results.push({
-        date: rows[i].date,
-        close: rows[i].close,
-        dayPct,
-        volume: rows[i].volume,
-        signals,
-        label
-      });
+        status.innerText = "✅ 分析完成！數據來自 Stooq 直接連線。";
+        
+        // 清理暫存的 Script
+        const oldScript = document.getElementById("stooq-api");
+        if (oldScript) oldScript.remove();
     }
 
-    return results;
-  }
+    function startDetection() {
+        const sym = document.getElementById("symbol").value.trim().toLowerCase();
+        const status = document.getElementById("status");
+        status.innerText = "⚡ 正在直接連線到 Stooq 數據源...";
 
-  function moneyFmt(n) {
-    return (n / 1e6).toFixed(2) + "M";
-  }
+        // 建立一個隱形的 Script 標籤來抓資料 (JSONP 技術)
+        const script = document.createElement("script");
+        script.id = "stooq-api";
+        // f=sd2ohclv 表示我們要：日期、開盤、最高、最低、收盤、成交量
+        script.src = `https://stooq.com/q/d/l/?s=${sym}&i=d&f=sd2ohclv&p=1&c=onStooqData`;
+        
+        script.onerror = () => {
+            status.innerText = "❌ 無法連線至 Stooq，請檢查網路或稍後再試。";
+        };
 
-  function formatSignals(signals) {
-    if (!signals.length) return "";
-    return signals.join(" + ");
-  }
-
-  async function fetchYahooData() {
-    const sym = cleanSymbol(document.getElementById("symbol").value);
-    if (!sym) {
-      document.getElementById("status").innerText = "❌ 請輸入代號（例如 ^GSPC）。";
-      return;
+        document.body.appendChild(script);
     }
-
-    const range = document.getElementById("window").value;
-    const status = document.getElementById("status");
-    const tbody = document.getElementById("tbody");
-
-    status.innerText = "⚡ 正在從 Yahoo 取得數據...";
-    tbody.innerHTML = "";
-
-    try {
-      const csvText = await fetchCSV(sym, range);
-      const rows = parseYahooCSV(csvText);
-      if (rows.length < 60) throw new Error("資料太少（可能被限制或代號無效）。");
-
-      const detected = detectSignals(rows);
-
-      // show newest first (like your earlier tool)
-      detected.reverse();
-
-      tbody.innerHTML = detected.map(r => {
-        const sig = r.signals.length ? r.signals.map(s => `<span class="tag" style="background:${s.includes("Climax") ? "var(--danger)" : "var(--warn)"}; margin-right:6px;">${s}</span>`).join("") : "";
-        return `
-          <tr>
-            <td>${r.date}</td>
-            <td>${r.close.toFixed(2)}</td>
-            <td style="color:${r.dayPct < 0 ? "var(--danger)" : "var(--ok)"}">${r.dayPct > 0 ? "+" : ""}${r.dayPct.toFixed(2)}%</td>
-            <td>${moneyFmt(r.volume)}</td>
-            <td>${sig}</td>
-            <td><span class="tag ${r.label.cls}">${r.label.text}</span></td>
-          </tr>
-        `;
-      }).join("");
-
-      status.innerText = `✅ 完成！偵測到 ${detected.length} 天。`;
-    } catch (e) {
-      console.error(e);
-      status.innerText = "❌ 失敗：Proxy 可能被擋、或 Yahoo 限制了連線。稍後再試。";
-    }
-  }
-
-  document.getElementById("btn").addEventListener("click", fetchYahooData);
 </script>
 </body>
 </html>
