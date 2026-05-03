@@ -1,120 +1,143 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="utf-8">
-    <title>S&P 500 出貨日偵測 - 穩定版</title>
-    <style>
-        :root { --bg: #0b1220; --card: #111b33; --text: #e8f0ff; --ok: #38d39f; --danger: #ff4d4d; --warn: #ffcc33; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
-        .card { background: var(--card); border-radius: 12px; padding: 25px; border: 1px solid #233052; max-width: 900px; margin: auto; }
-        .controls { display: flex; gap: 10px; margin-top: 15px; }
-        input { flex-grow: 1; padding: 12px; background: #0b1220; color: white; border: 1px solid #233052; border-radius: 8px; }
-        button { background: var(--ok); color: #0b1220; font-weight: bold; cursor: pointer; border: none; padding: 12px 25px; border-radius: 8px; }
-        table { width: 100%; margin-top: 25px; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233052; font-size: 13px; }
-        .tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #000; }
-        #status { margin-top: 15px; font-size: 13px; color: var(--warn); text-align: center; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>S&P 500 出貨日偵測 - 穩定版</title>
+  <style>
+    :root { --bg: #0b1220; --card: #111b33; --text: #e8f0ff; --ok: #38d39f; --danger: #ff4d4d; --warn: #ffcc33; }
+    body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
+    .card { background: var(--card); border-radius: 12px; padding: 25px; border: 1px solid #233052; max-width: 900px; margin: auto; }
+    .controls { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+    input { flex: 1; min-width: 240px; padding: 12px; background: #0b1220; color: white; border: 1px solid #233052; border-radius: 8px; }
+    button { background: var(--ok); color: #0b1220; font-weight: bold; cursor: pointer; border: none; padding: 12px 25px; border-radius: 8px; }
+    table { width: 100%; margin-top: 25px; border-collapse: collapse; max-width: 900px; margin-left: auto; margin-right: auto; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233052; font-size: 13px; }
+    .tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #000; display: inline-block; }
+    #status { margin-top: 15px; font-size: 13px; color: var(--warn); text-align: center; }
+    .note { font-size: 13px; color: #9fb0d0; }
+  </style>
 </head>
+
 <body>
-
-<div class="card">
+  <div class="card">
     <h2 style="margin-top:0;">🚀 出貨日偵測 (Yahoo Finance 版)</h2>
-    <p style="font-size: 13px; color: #9fb0d0;">監測指數與個股的出貨訊號。若要看標普 500，請輸入 ^GSPC。</p>
-    
-    <div class="controls">
-        <input type="text" id="symbol" value="^GSPC" placeholder="輸入代號 (如 ^GSPC, TSLA, AAPL)">
-        <button onclick="fetchYahooData()">執行分析</button>
-    </div>
-    <div id="status">準備就緒</div>
-</div>
+    <p class="note">監測指數與個股的出貨訊號。若要看標普 500，請輸入 ^GSPC。</p>
 
-<table>
+    <div class="controls">
+      <input type="text" id="symbol" value="^GSPC" placeholder="輸入代號 (如 ^GSPC, TSLA, AAPL)" />
+      <button type="button" onclick="fetchYahooData()">執行分析</button>
+    </div>
+
+    <div id="status">準備就緒</div>
+  </div>
+
+  <table>
     <thead>
-        <tr><th>日期</th><th>收盤價</th><th>漲跌幅</th><th>成交量</th><th>訊號判定</th></tr>
+      <tr>
+        <th>日期</th>
+        <th>收盤價</th>
+        <th>漲跌幅</th>
+        <th>成交量</th>
+        <th>訊號判定</th>
+      </tr>
     </thead>
     <tbody id="tbody"></tbody>
-</table>
+  </table>
 
-<script>
-async function fetchYahooData() {
-    let sym = document.getElementById('symbol').value.toUpperCase().trim();
-    
-    // 自動修正：如果輸入 SPX 或 GSPC，自動轉為 ^GSPC
-    if (sym === "SPX" || sym === "GSPC") {
-        sym = "^GSPC";
-    } else if (sym === "IXIC") {
-        sym = "^IXIC";
+  <script>
+    function cleanSymbol(input) {
+      let sym = String(input || "").trim().toUpperCase();
+      if (!sym) return "";
+      // 修正標普 500 的代號差異
+      if (sym === "^SPX") sym = "^GSPC";
+      return sym;
     }
-    
-    // 如果是個股 (如 TSLA)，不需要加 ^，但如果是指數漏了 ^，幫它補上
-    // 這裡我們先針對標普 500 做最強力的修正
-    if (sym === "^SPX") sym = "^GSPC";
 
-    const status = document.getElementById('status');
-    const tbody = document.getElementById('tbody');
-    // ... 後面接原本的 fetch 代碼 ...
+    async function fetchYahooData() {
+      const sym = cleanSymbol(document.getElementById('symbol').value);
 
-        status.innerText = "⚡ 正在從服務器獲取數據...";
-        tbody.innerHTML = "";
+      const status = document.getElementById('status');
+      const tbody = document.getElementById('tbody');
 
-        // 使用不同的 Proxy 服務或是直接請求 (Yahoo 的 CSV 接口通常較寬鬆)
-        const url = `https://query1.finance.yahoo.com/v7/finance/download/${sym}?range=2mo&interval=1d&events=history&includeAdjustedClose=true`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      if (!sym) {
+        status.innerText = "❌ 請輸入代號（例如 ^GSPC、TSLA、AAPL）。";
+        return;
+      }
 
-        try {
-            const resp = await fetch(proxyUrl);
-            const json = await resp.json();
-            const csvText = json.contents;
-            
-            const lines = csvText.trim().split('\n');
-            if (lines.length < 2) throw new Error("數據格式錯誤");
+      status.innerText = "⚡ 正在從服務器獲取數據...";
+      tbody.innerHTML = "";
 
-            const data = lines.slice(1); // Yahoo 下載的 CSV 已經是按日期升序排列
+      // Yahoo Finance CSV download URL
+      const url = `https://query1.finance.yahoo.com/v7/finance/download/${encodeURIComponent(sym)}?range=2mo&interval=1d&events=history&includeAdjustedClose=true`;
 
-            let html = "";
-            let distCount = 0;
+      // Proxy（可能偶爾不穩，若壞掉請看 GitHub Pages 的錯誤狀態訊息）
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
 
-            // 我們從最新的日期往前看 (i = length - 1)
-            for (let i = data.length - 1; i > 0; i--) {
-                const current = data[i].split(',');
-                const prev = data[i-1].split(',');
+      try {
+        const resp = await fetch(proxyUrl, { method: "GET" });
 
-                // Yahoo CSV 格式: Date,Open,High,Low,Close,Adj Close,Volume
-                const date = current[0];
-                const close = parseFloat(current[4]);
-                const prevClose = parseFloat(prev[4]);
-                const vol = parseInt(current[6]);
-                const prevVol = parseInt(prev[6]);
-                
-                if (isNaN(close) || isNaN(vol)) continue;
-
-                const change = ((close - prevClose) / prevClose) * 100;
-                let signal = "";
-                
-                // 出貨日核心邏輯：收盤跌幅 > 0.2% 且 成交量大於前一日
-                if (change < -0.2 && vol > prevVol) {
-                    signal = '<span class="tag" style="background:var(--warn)">出貨日</span>';
-                    distCount++;
-                }
-
-                html += `<tr>
-                    <td>${date}</td>
-                    <td>${close.toFixed(2)}</td>
-                    <td style="color:${change < 0 ? 'var(--danger)' : 'var(--ok)'}">${change > 0 ? '+' : ''}${change.toFixed(2)}%</td>
-                    <td>${(vol/1000000).toFixed(2)}M</td>
-                    <td>${signal}</td>
-                </tr>`;
-            }
-
-            tbody.innerHTML = html;
-            status.innerText = `✅ 分析完成！在過去兩個月內偵測到 ${distCount} 次訊號。`;
-
-        } catch (e) {
-            status.innerText = "❌ 請求失敗。請確認代號正確，或稍後再試。";
-            console.error(e);
+        if (!resp.ok) {
+          throw new Error(`Proxy 回應失敗：HTTP ${resp.status}`);
         }
+
+        const json = await resp.json();
+        const csvText = json.contents;
+
+        if (!csvText || typeof csvText !== "string") {
+          throw new Error("取得 CSV 內容失敗（可能是代號無效或 Proxy 被擋）。");
+        }
+
+        const lines = csvText.trim().split('\n');
+        if (lines.length < 2) throw new Error("數據格式錯誤（CSV 行數太少）。");
+
+        const data = lines.slice(1); // 去掉標題列
+
+        let html = "";
+        let distCount = 0;
+
+        // 從最新往前掃（便於你呈現最近資料的邏輯）
+        for (let i = data.length - 1; i > 0; i--) {
+          const current = data[i].split(',');
+          const prev = data[i - 1].split(',');
+
+          // Yahoo CSV: Date,Open,High,Low,Close,Adj Close,Volume
+          const date = current[0];
+          const close = parseFloat(current[4]);
+          const prevClose = parseFloat(prev[4]);
+          const vol = parseInt(current[6], 10);
+          const prevVol = parseInt(prev[6], 10);
+
+          if (isNaN(close) || isNaN(prevClose) || isNaN(vol) || isNaN(prevVol)) continue;
+
+          const change = ((close - prevClose) / prevClose) * 100;
+          let signal = "";
+
+          // 出貨日核心邏輯：收盤跌幅 > 0.2% 且 成交量大於前一日
+          if (change < -0.2 && vol > prevVol) {
+            signal = '<span class="tag" style="background:var(--warn)">出貨日</span>';
+            distCount++;
+          }
+
+          html += `
+            <tr>
+              <td>${date}</td>
+              <td>${close.toFixed(2)}</td>
+              <td style="color:${change < 0 ? 'var(--danger)' : 'var(--ok)'}">${change > 0 ? '+' : ''}${change.toFixed(2)}%</td>
+              <td>${(vol/1000000).toFixed(2)}M</td>
+              <td>${signal}</td>
+            </tr>
+          `;
+        }
+
+        tbody.innerHTML = html;
+        status.innerText = `✅ 分析完成！在過去兩個月內偵測到 ${distCount} 次訊號。`;
+
+      } catch (e) {
+        console.error(e);
+        status.innerText = "❌ 請求失敗。可能原因：代號不正確、Proxy 被擋、或網路暫時不穩。";
+      }
     }
-</script>
+  </script>
 </body>
 </html>
