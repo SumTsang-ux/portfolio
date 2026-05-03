@@ -2,56 +2,109 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>S&P 500 出貨日偵測 - 穩定終極版</title>
+    <title>S&P 500 出貨日偵測 - API 版</title>
     <style>
         :root { --bg: #0b1220; --card: #111b33; --text: #e8f0ff; --ok: #38d39f; --danger: #ff4d4d; --warn: #ffcc33; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
-        .card { background: var(--card); border-radius: 12px; padding: 25px; border: 1px solid #233052; max-width: 600px; margin: auto; text-align: center; }
-        .controls { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-        input { padding: 15px; background: #0b1220; color: white; border: 1px solid #233052; border-radius: 8px; font-size: 16px; text-align: center; }
-        button { background: var(--ok); color: #0b1220; font-weight: bold; cursor: pointer; border: none; padding: 15px; border-radius: 8px; font-size: 16px; }
-        .tip { font-size: 12px; color: #9fb0d0; margin-top: 10px; }
+        .card { background: var(--card); border-radius: 12px; padding: 25px; border: 1px solid #233052; max-width: 900px; margin: auto; }
+        .controls { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        input { flex-grow: 1; padding: 12px; background: #0b1220; color: white; border: 1px solid #233052; border-radius: 8px; min-width: 200px; }
+        button { background: var(--ok); color: #0b1220; font-weight: bold; cursor: pointer; border: none; padding: 12px 25px; border-radius: 8px; }
+        table { width: 100%; margin-top: 25px; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233052; font-size: 13px; }
+        .tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #000; }
+        #status { margin-top: 15px; font-size: 13px; color: var(--warn); text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="margin-top:0;">🚀 出貨日分析 (GitHub 專用版)</h2>
-    <p>因為瀏覽器安全限制，我們改用直接抓取模式。</p>
-    
+    <h2 style="margin-top:0;">🚀 出貨日偵測 (API 認證版)</h2>
     <div class="controls">
-        <input type="text" id="symbol" value="^SPX" placeholder="輸入代號 (如 ^SPX, SPY.US)">
-        <button onclick="downloadAndAnalyze()">開始獲取數據</button>
+        <input type="text" id="symbol" value="^SPX" placeholder="指數代號">
+        <input type="text" id="apikey" placeholder="在此貼上你的 Stooq API Key">
+        <button onclick="fetchWithKey()">執行分析</button>
     </div>
-    
-    <p class="tip">點擊後會直接連線到數據源</p>
-    <div id="status" style="margin-top:20px; color:var(--warn)"></div>
+    <div id="status">請輸入從 Stooq 取得的 API Key。</div>
 </div>
 
+<table>
+    <thead>
+        <tr><th>日期</th><th>收盤價</th><th>漲跌幅</th><th>成交量</th><th>訊號判定</th></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+</table>
+
 <script>
-    function downloadAndAnalyze() {
-        const sym = document.getElementById('symbol').value.toLowerCase().trim();
+    async function fetchWithKey() {
+        const sym = document.getElementById('symbol').value.trim();
+        const key = document.getElementById('apikey').value.trim();
         const status = document.getElementById('status');
-        
-        status.innerText = "⚡ 正在準備數據，請稍候...";
-        
-        // 這是 Stooq 官方的 CSV 下載網址
-        // 直接讓瀏覽器導向這個網址，避開所有 CORS 攔截
-        const downloadUrl = `https://stooq.com/q/d/l/?s=${sym}&i=d&f=sd2ohclv&p=1`;
-        
-        // 為了不讓你離開現在的網頁，我們用在新分頁開啟的方式
-        window.open(downloadUrl, '_blank');
-        
-        status.innerHTML = `
-            <div style="text-align:left; background:#0b1220; padding:15px; border-radius:8px; margin-top:10px;">
-                <p style="color:var(--ok)">✅ 已開啟數據下載窗口！</p>
-                <p style="font-size:13px; color:#e8f0ff;">Stooq 會下載一個 CSV 檔案。你可以：</p>
-                <ol style="font-size:13px; color:#e8f0ff;">
-                    <li>打開該檔案。</li>
-                    <li>檢查 <b>Volume (成交量)</b> 是否大於前一日。</li>
-                    <li>檢查 <b>Close (收盤)</b> 跌幅是否超過 0.2%。</li>
-                </ol>
-            </div>`;
+        const tbody = document.getElementById('tbody');
+
+        if (!key) {
+            status.innerText = "❌ 錯誤：請先輸入 API Key。";
+            return;
+        }
+
+        status.innerText = "⚡ 正在連線獲取數據...";
+        tbody.innerHTML = "";
+
+        // 使用 AllOrigins Proxy 繞過跨域限制，並帶上你取得的 API Key
+        const target = `https://stooq.com/q/d/l/?s=${sym}&i=d&f=sd2ohclv&p=1&apikey=${key}`;
+        const url = `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`;
+
+        try {
+            const resp = await fetch(url);
+            const json = await resp.json();
+            const csvText = json.contents;
+
+            if (csvText.includes("Invalid API Key") || csvText.length < 50) {
+                throw new Error("API Key 無效或已過期");
+            }
+
+            const lines = csvText.trim().split('\n');
+            const data = lines.slice(1);
+            let html = "";
+            let distCount = 0;
+
+            // 從最新數據往前分析
+            for (let i = data.length - 1; i > 0; i--) {
+                const current = data[i].split(',');
+                const prev = data[i-1].split(',');
+
+                const date = current[0];
+                const close = parseFloat(current[4]);
+                const prevClose = parseFloat(prev[4]);
+                const vol = parseInt(current[5]);
+                const prevVol = parseInt(prev[5]);
+                
+                if (isNaN(close) || isNaN(vol)) continue;
+
+                const change = ((close - prevClose) / prevClose) * 100;
+                let signal = "";
+                
+                if (change < -0.2 && vol > prevVol) {
+                    signal = '<span class="tag" style="background:var(--warn)">出貨日</span>';
+                    distCount++;
+                }
+
+                html += `<tr>
+                    <td>${date}</td>
+                    <td>${close.toFixed(2)}</td>
+                    <td style="color:${change < 0 ? 'var(--danger)' : 'var(--ok)'}">${change.toFixed(2)}%</td>
+                    <td>${(vol/1000000).toFixed(2)}M</td>
+                    <td>${signal}</td>
+                </tr>`;
+            }
+
+            tbody.innerHTML = html;
+            status.innerText = `✅ 分析完成！偵測到 ${distCount} 次出貨訊號。`;
+
+        } catch (e) {
+            status.innerText = `❌ 錯誤：${e.message}`;
+            console.error(e);
+        }
     }
 </script>
 </body>
