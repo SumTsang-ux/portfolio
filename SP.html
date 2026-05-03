@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <title>S&P 500 出貨日偵測 - GitHub 版</title>
+    <style>
+        :root { --bg: #0b1220; --card: #111b33; --text: #e8f0ff; --ok: #38d39f; --danger: #ff4d4d; --warn: #ffcc33; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
+        .card { background: var(--card); border-radius: 12px; padding: 25px; border: 1px solid #233052; max-width: 900px; margin: auto; }
+        .controls { display: flex; gap: 10px; margin-top: 15px; }
+        input { flex-grow: 1; padding: 12px; background: #0b1220; color: white; border: 1px solid #233052; border-radius: 8px; }
+        button { background: var(--ok); color: #0b1220; font-weight: bold; cursor: pointer; border: none; padding: 12px 25px; border-radius: 8px; transition: 0.2s; }
+        button:hover { opacity: 0.8; }
+        table { width: 100%; margin-top: 25px; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233052; font-size: 13px; }
+        .tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #000; }
+        #status { margin-top: 15px; font-size: 13px; color: var(--warn); text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2 style="margin-top:0;">🚀 GitHub 託管版偵測工具</h2>
+    <p style="font-size: 13px; color: #9fb0d0;">透過 CORS Proxy 繞過阻擋，直接分析 Stooq 數據。</p>
+    
+    <div class="controls">
+        <input type="text" id="symbol" value="^SPX" placeholder="輸入代號 (如 ^SPX, TSLA.US)">
+        <button onclick="fetchData()">執行分析</button>
+    </div>
+    <div id="status">準備就緒</div>
+</div>
+
+<table>
+    <thead>
+        <tr><th>日期</th><th>收盤價</th><th>漲跌幅</th><th>成交量</th><th>訊號判定</th></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+</table>
+
+<script>
+    async function fetchData() {
+        const sym = document.getElementById('symbol').value.toLowerCase();
+        const status = document.getElementById('status');
+        const tbody = document.getElementById('tbody');
+
+        status.innerText = "⚡ 正在透過 Proxy 請求 Stooq 數據...";
+        tbody.innerHTML = "";
+
+        // 使用 corsproxy.io 繞過 CORS 限制
+        const targetUrl = `https://stooq.com/q/d/l/?s=${sym}&i=d`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+
+        try {
+            const resp = await fetch(proxyUrl);
+            if (!resp.ok) throw new Error("代理伺服器回應異常");
+            
+            const csvText = await resp.text();
+            const lines = csvText.trim().split('\n');
+            
+            if (lines.length < 2) throw new Error("找不到數據，請檢查代號是否正確");
+
+            const data = lines.slice(1).reverse(); 
+
+            let html = "";
+            let distCount = 0;
+
+            for (let i = 0; i < Math.min(data.length - 1, 40); i++) {
+                const current = data[i].split(',');
+                const prev = data[i+1].split(',');
+
+                const date = current[0];
+                const close = parseFloat(current[4]);
+                const prevClose = parseFloat(prev[4]);
+                const vol = parseInt(current[5]);
+                const prevVol = parseInt(prev[5]);
+                
+                if (isNaN(close) || isNaN(vol)) continue;
+
+                const change = ((close - prevClose) / prevClose) * 100;
+                let signal = "";
+                
+                // 出貨日邏輯：價跌 + 量增[cite: 1]
+                if (change < -0.2 && vol > prevVol) {
+                    signal = '<span class="tag" style="background:var(--warn)">出貨日</span>';
+                    distCount++;
+                }
+
+                html += `<tr>
+                    <td>${date}</td>
+                    <td>${close.toFixed(2)}</td>
+                    <td style="color:${change < 0 ? 'var(--danger)' : 'var(--ok)'}">${change.toFixed(2)}%</td>
+                    <td>${(vol/1000000).toFixed(2)}M</td>
+                    <td>${signal}</td>
+                </tr>`;
+            }
+
+            tbody.innerHTML = html;
+            status.innerText = `✅ 分析完成！偵測到 ${distCount} 個訊號。`;
+
+        } catch (e) {
+            status.innerText = "❌ 錯誤: " + e.message + "。請稍後再試。";
+            console.error(e);
+        }
+    }
+</script>
+</body>
+</html>
