@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>S&P 500 Danger 偵測工具 (Stooq 直接連線版)</title>
+    <title>S&P 500 Danger 偵測工具</title>
     <style>
         :root {
             --bg:#0b1220; --card:#111b33; --text:#e8f0ff;
@@ -13,7 +13,8 @@
         body { background:var(--bg); color:var(--text); font-family:sans-serif; padding:20px; }
         .card { background:var(--card); border-radius:12px; padding:20px; border:1px solid var(--border); max-width:1100px; margin:auto; }
         .controls { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
-        input { padding:12px; background:#0b1220; color:white; border:1px solid var(--border); border-radius:8px; flex:1; min-width:220px; }
+        input, select { padding:12px; background:#0b1220; color:white; border:1px solid var(--border); border-radius:8px; }
+        input { flex:1; min-width:200px; }
         button { background:var(--ok); color:#0b1220; font-weight:bold; cursor:pointer; border:none; padding:12px 22px; border-radius:8px; }
         table { width:100%; margin-top:18px; border-collapse:collapse; }
         th, td { padding:12px; text-align:left; border-bottom:1px solid var(--border); font-size:13px; }
@@ -22,16 +23,20 @@
         .pill-med { background: var(--warn); }
         .pill-low { background: #6ea8ff; }
         #status { margin-top:10px; text-align:center; color:var(--warn); font-size:13px; }
-        .muted { color: var(--muted); font-size:13px; line-height:1.5; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2 style="margin-top:0;">🛡️ S&P 500 指數偵測 (無 Proxy 安全版)</h2>
-        <div class="muted">數據直接由 Stooq 提供，不經過任何中間服務器。請輸入代號 (如 ^SPX)。</div>
+        <h2 style="margin-top:0;">🚀 S&P 500 Danger 偵測 (穩定版)</h2>
         <div class="controls">
-            <input id="symbol" type="text" value="^SPX" placeholder="例如 ^SPX, ^NDQ" />
-            <button type="button" onclick="startDetection()">開始分析</button>
+            <input id="symbol" type="text" value="^GSPC" placeholder="例如 ^GSPC, TSLA" />
+            <select id="range">
+                <option value="1mo">最近 1 個月</option>
+                <option value="3mo" selected>最近 3 個月</option>
+                <option value="6mo">最近 6 個月</option>
+                <option value="1y">最近 1 年</option>
+            </select>
+            <button type="button" onclick="fetchData()">執行偵測</button>
         </div>
         <div id="status">準備就緒</div>
     </div>
@@ -40,103 +45,94 @@
         <thead>
             <tr>
                 <th>日期</th>
-                <th>收盤價</th>
+                <th>收盤</th>
                 <th>漲跌%</th>
                 <th>成交量</th>
                 <th>訊號</th>
-                <th>危險等級</th>
+                <th>風險</th>
             </tr>
         </thead>
         <tbody id="tbody"></tbody>
     </table>
 
 <script>
-    // 1. 回調函數：Stooq 獲取資料後會自動跑這裡
-    function onStooqData(json) {
+    async function fetchData() {
+        let sym = document.getElementById("symbol").value.trim().toUpperCase();
+        if (sym === "SPX" || sym === "^SPX") sym = "^GSPC"; // 自動校正
+        
+        const range = document.getElementById("range").value;
         const status = document.getElementById("status");
         const tbody = document.getElementById("tbody");
 
-        if (!json || json.length < 5) {
-            status.innerText = "❌ 數據讀取失敗，請檢查代號是否正確。";
-            return;
-        }
+        status.innerText = "⚡ 正在透過安全通道獲取 Yahoo 數據...";
+        tbody.innerHTML = "";
 
-        // Stooq 回傳格式: [Date, Open, High, Low, Close, Volume]
-        // 偵測邏輯
-        let html = "";
-        let results = [];
+        const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/download/${encodeURIComponent(sym)}?range=${range}&interval=1d&events=history`;
+        // 使用 AllOrigins 代理，它會將 CSV 內容包裝在 JSON 裡
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
 
-        // 從舊到新計算
-        for (let i = 1; i < json.length; i++) {
-            const curr = json[i];
-            const prev = json[i-1];
+        try {
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error("代理伺服器連線失敗");
             
-            const date = curr[0];
-            const close = parseFloat(curr[4]);
-            const prevClose = parseFloat(prev[4]);
-            const vol = parseInt(curr[5]);
-            const prevVol = parseInt(prev[5]);
+            const json = await response.json();
+            const csvData = json.contents; // 這是真正的 CSV 字串
+            
+            const lines = csvData.trim().split('\n');
+            if (lines.length < 2) throw new Error("找不到該代號的數據");
 
-            const change = ((close - prevClose) / prevClose) * 100;
-            let signals = [];
-            let score = 0;
+            let results = [];
+            for (let i = 1; i < lines.length; i++) {
+                const prevCols = lines[i-1].split(',');
+                const currCols = lines[i].split(',');
+                
+                const date = currCols[0];
+                const close = parseFloat(currCols[4]);
+                const prevClose = parseFloat(prevCols[4]);
+                const vol = parseInt(currCols[6]);
+                const prevVol = parseInt(prevCols[6]);
 
-            // 規則 A: 出貨日 (價跌 > 0.2% 且 量增)
-            if (change < -0.2 && vol > prevVol) {
-                signals.push("Distribution Day");
-                score += 1;
+                if (isNaN(close) || isNaN(vol) || isNaN(prevClose)) continue;
+
+                const change = ((close - prevClose) / prevClose) * 100;
+                let signals = [];
+                let score = 0;
+
+                // 核心邏輯
+                if (change < -0.2 && vol > prevVol) {
+                    signals.push("Distribution");
+                    score += 1;
+                }
+                if (change < -2.0) {
+                    signals.push("Sudden Drop");
+                    score += 2;
+                }
+
+                let label = { text: "Low", cls: "pill-low" };
+                if (score >= 3) label = { text: "Danger", cls: "pill-danger" };
+                else if (score >= 1) label = { text: "Medium", cls: "pill-med" };
+
+                results.push({ date, close, change, vol, signals, label });
             }
 
-            // 規則 B: 重挫 (價跌 > 2.0%)
-            if (change < -2.0) {
-                signals.push("Sudden Bear");
-                score += 2;
-            }
+            results.reverse(); // 最新日期在上
+            tbody.innerHTML = results.map(r => `
+                <tr>
+                    <td>${r.date}</td>
+                    <td>${r.close.toFixed(2)}</td>
+                    <td style="color:${r.change < 0 ? 'var(--danger)' : 'var(--ok)'}">${r.change.toFixed(2)}%</td>
+                    <td>${(r.vol / 1000000).toFixed(2)}M</td>
+                    <td>${r.signals.map(s => `<span class="tag pill-med">${s}</span>`).join("")}</td>
+                    <td><span class="tag ${r.label.cls}">${r.label.text}</span></td>
+                </tr>
+            `).join("");
 
-            let label = { text: "Low", cls: "pill-low" };
-            if (score >= 3) label = { text: "Danger", cls: "pill-danger" };
-            else if (score >= 1) label = { text: "Medium", cls: "pill-med" };
+            status.innerText = `✅ 完成！已分析過去 ${range} 的數據。`;
 
-            results.push({ date, close, change, vol, signals, label });
+        } catch (e) {
+            console.error(e);
+            status.innerText = `❌ 錯誤：${e.message}。請確認代號正確 (如 ^GSPC)。`;
         }
-
-        // 倒序顯示 (最新日期在前)
-        results.reverse();
-
-        tbody.innerHTML = results.map(r => `
-            <tr>
-                <td>${r.date}</td>
-                <td>${r.close.toFixed(2)}</td>
-                <td style="color:${r.change < 0 ? 'var(--danger)' : 'var(--ok)'}">${r.change.toFixed(2)}%</td>
-                <td>${(r.vol / 1000000).toFixed(2)}M</td>
-                <td>${r.signals.map(s => `<span class="tag pill-med">${s}</span>`).join("")}</td>
-                <td><span class="tag ${r.label.cls}">${r.label.text}</span></td>
-            </tr>
-        `).join("");
-
-        status.innerText = "✅ 分析完成！數據來自 Stooq 直接連線。";
-        
-        // 清理暫存的 Script
-        const oldScript = document.getElementById("stooq-api");
-        if (oldScript) oldScript.remove();
-    }
-
-    function startDetection() {
-        const sym = document.getElementById("symbol").value.trim().toLowerCase();
-        const status = document.getElementById("status");
-        status.innerText = "⚡ 正在直接連線到 Stooq 數據源...";
-
-        // 建立一個隱形的 Script 標籤來抓資料 (JSONP 技術)
-        const script = document.createElement("script");
-        script.id = "stooq-api";
-        // f=sd2ohclv 表示我們要：日期、開盤、最高、最低、收盤、成交量
-        script.src = `https://stooq.com/q/d/l/?s=${sym}&i=d&f=sd2ohclv&p=1&c=onStooqData`;
-        
-        script.onerror = () => {
-            status.innerText = "❌ 無法連線至 Stooq，請檢查網路或稍後再試。";
-        };
-
-        document.body.appendChild(script);
     }
 </script>
 </body>
