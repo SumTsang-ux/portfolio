@@ -2,15 +2,14 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="utf-8">
-    <title>S&P 500 出貨日偵測 - GitHub 版</title>
+    <title>S&P 500 出貨日偵測 - 穩定版</title>
     <style>
         :root { --bg: #0b1220; --card: #111b33; --text: #e8f0ff; --ok: #38d39f; --danger: #ff4d4d; --warn: #ffcc33; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
         .card { background: var(--card); border-radius: 12px; padding: 25px; border: 1px solid #233052; max-width: 900px; margin: auto; }
         .controls { display: flex; gap: 10px; margin-top: 15px; }
         input { flex-grow: 1; padding: 12px; background: #0b1220; color: white; border: 1px solid #233052; border-radius: 8px; }
-        button { background: var(--ok); color: #0b1220; font-weight: bold; cursor: pointer; border: none; padding: 12px 25px; border-radius: 8px; transition: 0.2s; }
-        button:hover { opacity: 0.8; }
+        button { background: var(--ok); color: #0b1220; font-weight: bold; cursor: pointer; border: none; padding: 12px 25px; border-radius: 8px; }
         table { width: 100%; margin-top: 25px; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233052; font-size: 13px; }
         .tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #000; }
@@ -18,14 +17,14 @@
     </style>
 </head>
 <body>
-window.onload = () => document.getElementById('symbol').focus();
+
 <div class="card">
-    <h2 style="margin-top:0;">🚀 GitHub 託管版偵測工具</h2>
-    <p style="font-size: 13px; color: #9fb0d0;">透過 CORS Proxy 繞過阻擋，直接分析 Stooq 數據。</p>
+    <h2 style="margin-top:0;">🚀 出貨日偵測 (Yahoo Finance 版)</h2>
+    <p style="font-size: 13px; color: #9fb0d0;">監測指數與個股的出貨訊號。若要看標普 500，請輸入 ^GSPC。</p>
     
     <div class="controls">
-        <input type="text" id="symbol" value="^SPX" placeholder="輸入代號 (如 ^SPX, TSLA.US)">
-        <button onclick="fetchData()">執行分析</button>
+        <input type="text" id="symbol" value="^GSPC" placeholder="輸入代號 (如 ^GSPC, TSLA, AAPL)">
+        <button onclick="fetchYahooData()">執行分析</button>
     </div>
     <div id="status">準備就緒</div>
 </div>
@@ -38,48 +37,52 @@ window.onload = () => document.getElementById('symbol').focus();
 </table>
 
 <script>
-    async function fetchData() {
-        const sym = document.getElementById('symbol').value.toLowerCase();
+    async function fetchYahooData() {
+        let sym = document.getElementById('symbol').value.toUpperCase();
+        // 修正標普 500 的代號差異
+        if (sym === "^SPX") sym = "^GSPC";
+
         const status = document.getElementById('status');
         const tbody = document.getElementById('tbody');
 
-        status.innerText = "⚡ 正在透過 Proxy 請求 Stooq 數據...";
+        status.innerText = "⚡ 正在從服務器獲取數據...";
         tbody.innerHTML = "";
 
-        // 使用 corsproxy.io 繞過 CORS 限制
-        const targetUrl = `https://stooq.com/q/d/l/?s=${sym}&i=d`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+        // 使用不同的 Proxy 服務或是直接請求 (Yahoo 的 CSV 接口通常較寬鬆)
+        const url = `https://query1.finance.yahoo.com/v7/finance/download/${sym}?range=2mo&interval=1d&events=history&includeAdjustedClose=true`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
 
         try {
             const resp = await fetch(proxyUrl);
-            if (!resp.ok) throw new Error("代理伺服器回應異常");
+            const json = await resp.json();
+            const csvText = json.contents;
             
-            const csvText = await resp.text();
             const lines = csvText.trim().split('\n');
-            
-            if (lines.length < 2) throw new Error("找不到數據，請檢查代號是否正確");
+            if (lines.length < 2) throw new Error("數據格式錯誤");
 
-            const data = lines.slice(1).reverse(); 
+            const data = lines.slice(1); // Yahoo 下載的 CSV 已經是按日期升序排列
 
             let html = "";
             let distCount = 0;
 
-            for (let i = 0; i < Math.min(data.length - 1, 40); i++) {
+            // 我們從最新的日期往前看 (i = length - 1)
+            for (let i = data.length - 1; i > 0; i--) {
                 const current = data[i].split(',');
-                const prev = data[i+1].split(',');
+                const prev = data[i-1].split(',');
 
+                // Yahoo CSV 格式: Date,Open,High,Low,Close,Adj Close,Volume
                 const date = current[0];
                 const close = parseFloat(current[4]);
                 const prevClose = parseFloat(prev[4]);
-                const vol = parseInt(current[5]);
-                const prevVol = parseInt(prev[5]);
+                const vol = parseInt(current[6]);
+                const prevVol = parseInt(prev[6]);
                 
                 if (isNaN(close) || isNaN(vol)) continue;
 
                 const change = ((close - prevClose) / prevClose) * 100;
                 let signal = "";
                 
-                // 出貨日邏輯：價跌 + 量增[cite: 1]
+                // 出貨日核心邏輯：收盤跌幅 > 0.2% 且 成交量大於前一日
                 if (change < -0.2 && vol > prevVol) {
                     signal = '<span class="tag" style="background:var(--warn)">出貨日</span>';
                     distCount++;
@@ -88,17 +91,17 @@ window.onload = () => document.getElementById('symbol').focus();
                 html += `<tr>
                     <td>${date}</td>
                     <td>${close.toFixed(2)}</td>
-                    <td style="color:${change < 0 ? 'var(--danger)' : 'var(--ok)'}">${change.toFixed(2)}%</td>
+                    <td style="color:${change < 0 ? 'var(--danger)' : 'var(--ok)'}">${change > 0 ? '+' : ''}${change.toFixed(2)}%</td>
                     <td>${(vol/1000000).toFixed(2)}M</td>
                     <td>${signal}</td>
                 </tr>`;
             }
 
             tbody.innerHTML = html;
-            status.innerText = `✅ 分析完成！偵測到 ${distCount} 個訊號。`;
+            status.innerText = `✅ 分析完成！在過去兩個月內偵測到 ${distCount} 次訊號。`;
 
         } catch (e) {
-            status.innerText = "❌ 錯誤: " + e.message + "。請稍後再試。";
+            status.innerText = "❌ 請求失敗。請確認代號正確，或稍後再試。";
             console.error(e);
         }
     }
