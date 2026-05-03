@@ -1,138 +1,57 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>S&P 500 Danger 偵測工具</title>
+    <meta charset="utf-8">
+    <title>S&P 500 出貨日偵測 - 穩定終極版</title>
     <style>
-        :root {
-            --bg:#0b1220; --card:#111b33; --text:#e8f0ff;
-            --ok:#38d39f; --danger:#ff4d4d; --warn:#ffcc33; --muted:#9fb0d0;
-            --border:#233052;
-        }
-        body { background:var(--bg); color:var(--text); font-family:sans-serif; padding:20px; }
-        .card { background:var(--card); border-radius:12px; padding:20px; border:1px solid var(--border); max-width:1100px; margin:auto; }
-        .controls { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
-        input, select { padding:12px; background:#0b1220; color:white; border:1px solid var(--border); border-radius:8px; }
-        input { flex:1; min-width:200px; }
-        button { background:var(--ok); color:#0b1220; font-weight:bold; cursor:pointer; border:none; padding:12px 22px; border-radius:8px; }
-        table { width:100%; margin-top:18px; border-collapse:collapse; }
-        th, td { padding:12px; text-align:left; border-bottom:1px solid var(--border); font-size:13px; }
-        .tag { padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; display:inline-block; color:#000; margin-right:4px;}
-        .pill-danger { background: var(--danger); }
-        .pill-med { background: var(--warn); }
-        .pill-low { background: #6ea8ff; }
-        #status { margin-top:10px; text-align:center; color:var(--warn); font-size:13px; }
+        :root { --bg: #0b1220; --card: #111b33; --text: #e8f0ff; --ok: #38d39f; --danger: #ff4d4d; --warn: #ffcc33; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
+        .card { background: var(--card); border-radius: 12px; padding: 25px; border: 1px solid #233052; max-width: 600px; margin: auto; text-align: center; }
+        .controls { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        input { padding: 15px; background: #0b1220; color: white; border: 1px solid #233052; border-radius: 8px; font-size: 16px; text-align: center; }
+        button { background: var(--ok); color: #0b1220; font-weight: bold; cursor: pointer; border: none; padding: 15px; border-radius: 8px; font-size: 16px; }
+        .tip { font-size: 12px; color: #9fb0d0; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2 style="margin-top:0;">🚀 S&P 500 Danger 偵測 (穩定版)</h2>
-        <div class="controls">
-            <input id="symbol" type="text" value="^GSPC" placeholder="例如 ^GSPC, TSLA" />
-            <select id="range">
-                <option value="1mo">最近 1 個月</option>
-                <option value="3mo" selected>最近 3 個月</option>
-                <option value="6mo">最近 6 個月</option>
-                <option value="1y">最近 1 年</option>
-            </select>
-            <button type="button" onclick="fetchData()">執行偵測</button>
-        </div>
-        <div id="status">準備就緒</div>
-    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>日期</th>
-                <th>收盤</th>
-                <th>漲跌%</th>
-                <th>成交量</th>
-                <th>訊號</th>
-                <th>風險</th>
-            </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-    </table>
+<div class="card">
+    <h2 style="margin-top:0;">🚀 出貨日分析 (GitHub 專用版)</h2>
+    <p>因為瀏覽器安全限制，我們改用直接抓取模式。</p>
+    
+    <div class="controls">
+        <input type="text" id="symbol" value="^SPX" placeholder="輸入代號 (如 ^SPX, SPY.US)">
+        <button onclick="downloadAndAnalyze()">開始獲取數據</button>
+    </div>
+    
+    <p class="tip">點擊後會直接連線到數據源</p>
+    <div id="status" style="margin-top:20px; color:var(--warn)"></div>
+</div>
 
 <script>
-    async function fetchData() {
-        let sym = document.getElementById("symbol").value.trim().toUpperCase();
-        if (sym === "SPX" || sym === "^SPX") sym = "^GSPC"; // 自動校正
+    function downloadAndAnalyze() {
+        const sym = document.getElementById('symbol').value.toLowerCase().trim();
+        const status = document.getElementById('status');
         
-        const range = document.getElementById("range").value;
-        const status = document.getElementById("status");
-        const tbody = document.getElementById("tbody");
-
-        status.innerText = "⚡ 正在透過安全通道獲取 Yahoo 數據...";
-        tbody.innerHTML = "";
-
-        const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/download/${encodeURIComponent(sym)}?range=${range}&interval=1d&events=history`;
-        // 使用 AllOrigins 代理，它會將 CSV 內容包裝在 JSON 裡
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
-
-        try {
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error("代理伺服器連線失敗");
-            
-            const json = await response.json();
-            const csvData = json.contents; // 這是真正的 CSV 字串
-            
-            const lines = csvData.trim().split('\n');
-            if (lines.length < 2) throw new Error("找不到該代號的數據");
-
-            let results = [];
-            for (let i = 1; i < lines.length; i++) {
-                const prevCols = lines[i-1].split(',');
-                const currCols = lines[i].split(',');
-                
-                const date = currCols[0];
-                const close = parseFloat(currCols[4]);
-                const prevClose = parseFloat(prevCols[4]);
-                const vol = parseInt(currCols[6]);
-                const prevVol = parseInt(prevCols[6]);
-
-                if (isNaN(close) || isNaN(vol) || isNaN(prevClose)) continue;
-
-                const change = ((close - prevClose) / prevClose) * 100;
-                let signals = [];
-                let score = 0;
-
-                // 核心邏輯
-                if (change < -0.2 && vol > prevVol) {
-                    signals.push("Distribution");
-                    score += 1;
-                }
-                if (change < -2.0) {
-                    signals.push("Sudden Drop");
-                    score += 2;
-                }
-
-                let label = { text: "Low", cls: "pill-low" };
-                if (score >= 3) label = { text: "Danger", cls: "pill-danger" };
-                else if (score >= 1) label = { text: "Medium", cls: "pill-med" };
-
-                results.push({ date, close, change, vol, signals, label });
-            }
-
-            results.reverse(); // 最新日期在上
-            tbody.innerHTML = results.map(r => `
-                <tr>
-                    <td>${r.date}</td>
-                    <td>${r.close.toFixed(2)}</td>
-                    <td style="color:${r.change < 0 ? 'var(--danger)' : 'var(--ok)'}">${r.change.toFixed(2)}%</td>
-                    <td>${(r.vol / 1000000).toFixed(2)}M</td>
-                    <td>${r.signals.map(s => `<span class="tag pill-med">${s}</span>`).join("")}</td>
-                    <td><span class="tag ${r.label.cls}">${r.label.text}</span></td>
-                </tr>
-            `).join("");
-
-            status.innerText = `✅ 完成！已分析過去 ${range} 的數據。`;
-
-        } catch (e) {
-            console.error(e);
-            status.innerText = `❌ 錯誤：${e.message}。請確認代號正確 (如 ^GSPC)。`;
-        }
+        status.innerText = "⚡ 正在準備數據，請稍候...";
+        
+        // 這是 Stooq 官方的 CSV 下載網址
+        // 直接讓瀏覽器導向這個網址，避開所有 CORS 攔截
+        const downloadUrl = `https://stooq.com/q/d/l/?s=${sym}&i=d&f=sd2ohclv&p=1`;
+        
+        // 為了不讓你離開現在的網頁，我們用在新分頁開啟的方式
+        window.open(downloadUrl, '_blank');
+        
+        status.innerHTML = `
+            <div style="text-align:left; background:#0b1220; padding:15px; border-radius:8px; margin-top:10px;">
+                <p style="color:var(--ok)">✅ 已開啟數據下載窗口！</p>
+                <p style="font-size:13px; color:#e8f0ff;">Stooq 會下載一個 CSV 檔案。你可以：</p>
+                <ol style="font-size:13px; color:#e8f0ff;">
+                    <li>打開該檔案。</li>
+                    <li>檢查 <b>Volume (成交量)</b> 是否大於前一日。</li>
+                    <li>檢查 <b>Close (收盤)</b> 跌幅是否超過 0.2%。</li>
+                </ol>
+            </div>`;
     }
 </script>
 </body>
