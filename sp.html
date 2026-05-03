@@ -37,13 +37,23 @@
 </table>
 
 <script>
-    async function fetchYahooData() {
-        let sym = document.getElementById('symbol').value.toUpperCase();
-        // 修正標普 500 的代號差異
-        if (sym === "^SPX") sym = "^GSPC";
+async function fetchYahooData() {
+    let sym = document.getElementById('symbol').value.toUpperCase().trim();
+    
+    // 自動修正：如果輸入 SPX 或 GSPC，自動轉為 ^GSPC
+    if (sym === "SPX" || sym === "GSPC") {
+        sym = "^GSPC";
+    } else if (sym === "IXIC") {
+        sym = "^IXIC";
+    }
+    
+    // 如果是個股 (如 TSLA)，不需要加 ^，但如果是指數漏了 ^，幫它補上
+    // 這裡我們先針對標普 500 做最強力的修正
+    if (sym === "^SPX") sym = "^GSPC";
 
-        const status = document.getElementById('status');
-        const tbody = document.getElementById('tbody');
+    const status = document.getElementById('status');
+    const tbody = document.getElementById('tbody');
+    // ... 後面接原本的 fetch 代碼 ...
 
         status.innerText = "⚡ 正在從服務器獲取數據...";
         tbody.innerHTML = "";
