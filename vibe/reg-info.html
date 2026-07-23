@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHC Home Registration — New Registration</title>
+<style>
+  :root{
+    /* Colors */
+    --color-green: #00A651;
+    --color-green-dark: #009148;
+    --color-white: #FFFFFF;
+    --color-text: #333333;
+    --color-text-muted: #707070;
+    --color-icon: #4d4d4d;
+    --color-border: #DDDDDD;
+    --color-field-border: #CCCCCC;
+    --color-bg-grey: #F2F2F2;
+    --color-bg-soft: #F6F6F6;
+    --color-required-bg: #FCEFCE;
+    --color-required-border: #E9D9AE;
+    --color-error: #E02020;
+    --color-active-bg: #E4F6EC;
+
+    /* Typography */
+    --font-family: 'Roboto', Arial, Helvetica, sans-serif;
+    --fs-20: 22px;
+    --fs-16: 18px;
+    --fs-14: 16px;
+    --fs-13: 15px;
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 40px;
+
+    /* Radius */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-pill: 18px;
+
+    --sidebar-width: 80px;
+    --header-height: 64px;
+    --tabs-height: 40px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    color: var(--color-text);
+    background: var(--color-white);
+    font-size: var(--fs-14);
+  }
+
+  ul{ list-style: none; margin:0; padding:0; }
+  button{ font-family: inherit; cursor: pointer; }
+  input, textarea{ font-family: inherit; }
+
+  .app{ display: flex; min-height: 100vh; max-width: 1800px; margin: 0 auto; border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border); }
+  @media (min-width: 1801px){ body{ background: var(--color-bg-grey); } }
+
+  /* ---------------- Sidebar ---------------- */
+  .sidebar{
+    flex: 0 0 var(--sidebar-width);
+    width: var(--sidebar-width);
+    background: var(--color-white);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: var(--space-md);
+  }
+
+  .sidebar__logo{
+    width: 36px;
+    height: 36px;
+    margin-bottom: var(--space-lg);
+    flex: 0 0 auto;
+  }
+
+  .sidebar__nav{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sidebar__item{
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-icon);
+  }
+
+  .sidebar__item svg{ width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+
+  .sidebar__item--active{
+    color: var(--color-green);
+    background: var(--color-active-bg);
+  }
+
+  /* ---------------- Main column ---------------- */
+  .main{ flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+
+  /* ---------------- Header ---------------- */
+  .topbar{
+    height: var(--header-height);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-xl);
+    gap: var(--space-md);
+  }
+
+  .topbar__crumb{ display: flex; align-items: center; gap: var(--space-md); min-width: 0; }
+
+  .topbar__menu-btn{
+    width: 32px; height: 32px;
+    border: none; border-radius: var(--radius-sm);
+    background: var(--color-green);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; flex: 0 0 auto;
+  }
+  .topbar__menu-btn span{ display:block; width: 16px; height: 2px; border-radius: 1px; background: var(--color-white); }
+
+  .topbar__crumb-text{
+    display: flex; align-items: center; gap: var(--space-sm);
+    font-weight: 700; font-size: var(--fs-20); white-space: nowrap;
+  }
+  .topbar__crumb-home{ color: var(--color-text-muted); }
+  .topbar__crumb-sep{ color: var(--color-field-border); font-weight: 400; }
+  .topbar__crumb-current{ color: var(--color-green); }
+
+  .topbar__actions{ display: flex; gap: var(--space-md); flex: 0 0 auto; }
+  .btn{
+    height: 34px;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    font-size: var(--fs-16);
+    padding: 0 var(--space-lg);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    border: 1px solid transparent;
+  }
+  .btn-cancel{ background: var(--color-white); border-color: var(--color-error); color: var(--color-error); }
+  .btn-submit{ background: var(--color-green); border-color: var(--color-green); color: var(--color-white); }
+  .btn-outline-green{ background: var(--color-white); border-color: var(--color-green); color: var(--color-green); }
+  .btn svg{ width: 16px; height: 16px; }
+
+  /* ---------------- Tabs ---------------- */
+  .tabs-bar{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-white);
+  }
+
+
+  .tabs-hamburger{
+    display: none;
+    width: 32px; height: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 3px;
+    margin: 6px var(--space-lg);
+  }
+  .tabs-hamburger span{ display:block; width: 16px; height: 2px; background: var(--color-text); }
+
+  .tabs{
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+  .tabs__item{
+    flex: 1 1 0;
+    height: var(--tabs-height);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-sm);
+    background: var(--color-bg-grey);
+    border-right: 1px solid var(--color-border);
+    font-weight: 700; font-size: var(--fs-14);
+    color: var(--color-text);
+    white-space: nowrap;
+    padding: 0 var(--space-md);
+    text-decoration: none;
+  }
+  .tabs__item:last-child{ border-right: none; }
+  .tabs__item--active{ background: var(--color-green); color: var(--color-white); }
+  .tabs__item svg{ width: 14px; height: 14px; flex: 0 0 auto; }
+
+  /* ---------------- Content ---------------- */
+  .content{ flex: 1 1 auto; display: flex; justify-content: center; padding: var(--space-xl) var(--space-xl) 80px; }
+  .content__inner{ width: 100%; max-width: 1600px; }
+
+  /* Search / New registration bar */
+  .search-bar{ display: flex; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-xl); }
+  .search-bar__group{
+    flex: 1 1 340px;
+    background: var(--color-bg-grey);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+  }
+  .search-bar__label{ font-weight: 700; font-size: var(--fs-14); white-space: nowrap; flex: 0 0 auto; }
+  .search-bar__field{
+    flex: 1 1 auto; height: 36px; background: var(--color-white);
+    border: 1px solid var(--color-field-border); border-radius: var(--radius-sm);
+    padding: 0 var(--space-sm); font-size: var(--fs-16); color: var(--color-text); min-width: 0;
+  }
+  .search-bar__group--right{ justify-content: flex-end; }
+  .search-bar__group--right .search-bar__label{ color: var(--color-text-muted); margin-right: auto; }
+  .btn-apply{
+    flex: 0 0 auto; height: 32px; padding: 0 var(--space-lg);
+    background: var(--color-green); border: none; border-radius: var(--radius-pill);
+    color: var(--color-white); font-weight: 700; font-size: var(--fs-16);
+  }
+
+  /* Section / panel */
+  .panel{ margin-bottom: var(--space-lg); }
+  .panel__title{
+    display: flex; align-items: center; gap: var(--space-md);
+    font-weight: 700; font-size: var(--fs-16); color: var(--color-text);
+    margin: 0 0 var(--space-lg) 0;
+  }
+  .panel__title::before{
+    content:""; display:block; width: 4px; height: 22px;
+    background: var(--color-green); border-radius: 2px; flex: 0 0 auto;
+  }
+
+  .subheading{ font-weight: 700; font-size: var(--fs-14); margin: 0 0 var(--space-md) 0; }
+
+  .divider{ border: none; border-top: 1px solid var(--color-border); margin: var(--space-lg) 0; }
+
+  /* two-column personal info layout */
+  .personal-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .personal-grid__col{ display: flex; flex-direction: column; gap: var(--space-lg); }
+  .personal-grid__col:last-child{ border-left: 1px solid var(--color-border); padding-left: var(--space-xl); }
+  .personal-grid__col:first-child{ padding-right: var(--space-xl); }
+  .personal-grid__col + .personal-grid__col{ padding-left: var(--space-xl); border-left: 1px solid var(--color-border); }
+
+  /* generic field rows */
+  .field-row{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+  .field-row--3{ grid-template-columns: repeat(3, 1fr); }
+  .field-row--4{ grid-template-columns: repeat(4, 1fr); }
+
+  .field{ display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+  .field__label{ font-size: var(--fs-14); color: var(--color-text); }
+  .field__required{ color: var(--color-error); margin-right: 2px; }
+
+  .field__input{
+    height: 38px;
+    background: var(--color-white);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-sm);
+    font-size: var(--fs-16);
+    color: var(--color-text);
+    width: 100%;
+  }
+  .field__input:disabled{ background: var(--color-bg-grey); color: var(--color-text-muted); }
+  .field__input::placeholder{ color: #9a9a9a; }
+
+  .field__input--required{ background: var(--color-required-bg); border-color: var(--color-required-border); }
+  .field__input--required::placeholder{ color: #b7935f; }
+
+  .field__combo{ display: flex; align-items: stretch; }
+  .field__combo .field__input{ border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-right: none; }
+  .field__icon-btn{
+    flex: 0 0 34px; width: 34px;
+    background: var(--color-green); border: none;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    display: flex; align-items: center; justify-content: center; color: var(--color-white);
+  }
+  .field__icon-btn svg{ width: 14px; height: 14px; }
+
+  .name-pair{ display: flex; gap: var(--space-sm); }
+
+  .id-with-check{ display: flex; align-items: flex-end; gap: var(--space-sm); }
+  .id-with-check .field{ flex: 1 1 auto; }
+  .check-digit{
+    flex: 0 0 auto; display: flex; align-items: center; gap: 4px;
+    height: 38px; font-size: 18px; color: var(--color-text);
+  }
+  .check-digit .field__input{ width: 44px; text-align: center; padding: 0; font-size: 18px; }
+
+  .field--other-row{ display: flex; align-items: flex-end; gap: var(--space-lg); }
+  .field--other-row .field{ flex: 1 1 auto; }
+
+  .checkbox{
+    display: flex; align-items: center; gap: var(--space-sm);
+    font-size: var(--fs-16); color: var(--color-text); cursor: pointer;
+    white-space: nowrap;
+  }
+  .checkbox input{ width: 18px; height: 18px; accent-color: var(--color-green); margin: 0; flex: 0 0 auto; }
+
+  .radio-group{ display: flex; align-items: center; gap: var(--space-xl); flex-wrap: wrap; }
+  .radio{ display: flex; align-items: center; gap: var(--space-sm); font-size: var(--fs-16); color: var(--color-text); cursor: pointer; }
+  .radio input{ width: 20px; height: 20px; accent-color: var(--color-green); margin: 0; }
+
+  .field-note{ font-size: var(--fs-13); color: var(--color-text-muted); margin: 2px 0 0 0; }
+
+  /* Address */
+  .adi-row{ display: flex; gap: var(--space-md); flex-wrap: wrap; margin-bottom: var(--space-md); }
+  .address-box{
+    position: relative;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+  .address-box::before{
+    content: "";
+    position: absolute;
+    top: -9px;
+    left: 60px;
+    width: 16px; height: 16px;
+    background: var(--color-bg-soft);
+    border-left: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-border);
+    transform: rotate(45deg);
+  }
+
+  .textarea-field{
+    width: 100%;
+    min-height: 96px;
+    background: var(--color-white);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm);
+    font-size: var(--fs-16);
+    color: var(--color-text);
+    resize: vertical;
+  }
+
+  .next-tab-btn{
+    background: none; border: none;
+    display: flex; align-items: center; gap: var(--space-sm);
+    color: var(--color-green); font-size: var(--fs-20); font-weight: 400;
+    margin-top: var(--space-xl);
+    margin-left: auto;
+  }
+  .next-tab-btn svg{ width: 22px; height: 22px; }
+  .next-tab-wrap{ display: flex; }
+
+  .visually-hidden{
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* ---------------- Responsive ---------------- */
+  @media (max-width: 1024px){
+    .topbar{ padding: 0 var(--space-lg); }
+    .personal-grid{ grid-template-columns: 1fr; gap: var(--space-lg); }
+    .personal-grid__col:last-child{ border-left: none; padding-left: 0; padding-top: var(--space-lg); border-top: 1px solid var(--color-border); }
+    .personal-grid__col:first-child{ padding-right: 0; }
+    .personal-grid__col + .personal-grid__col{ padding-left: 0; border-left: none; }
+    .field-row--4{ grid-template-columns: repeat(2, 1fr); }
+    .field-row--3{ grid-template-columns: repeat(2, 1fr); }
+    .content{ padding: var(--space-lg); }
+
+    .tabs-hamburger{ display: flex; }
+    .tabs-bar{ flex-direction: column; align-items: stretch; padding: 0; }
+    .tabs{ flex-direction: column; max-height: 0; }
+    .tabs.is-open{ max-height: 300px; }
+    .tabs__item{ border-right: none; border-bottom: 1px solid var(--color-border); }
+  }
+
+  @media (max-width: 768px){
+    .sidebar{ display: none; }
+    .topbar{ padding: 0 var(--space-md); flex-wrap: wrap; height: auto; padding-top: var(--space-sm); padding-bottom: var(--space-sm); gap: var(--space-sm); }
+    .topbar__crumb-text{ font-size: 16px; }
+    .field-row, .field-row--3, .field-row--4{ grid-template-columns: 1fr; }
+    .name-pair{ flex-direction: column; }
+    .search-bar{ flex-direction: column; gap: var(--space-sm); }
+    .search-bar__group{
+      flex-basis: auto;
+      flex-wrap: wrap;
+      padding: var(--space-sm) var(--space-md);
+      gap: var(--space-sm);
+    }
+    .search-bar__group--right{ justify-content: space-between; }
+    .search-bar__group--right .search-bar__label{ margin-right: 0; }
+    .search-bar__field{ flex-basis: 100%; }
+    .id-with-check{ flex-direction: column; align-items: stretch; }
+    .field--other-row{ flex-direction: column; align-items: stretch; }
+    .content{ padding: var(--space-md); }
+    .adi-row{ flex-direction: column; }
+    .btn{ padding: 0 var(--space-md); font-size: 14px; }
+    .next-tab-btn{ margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ Sidebar ============ -->
+  <nav class="sidebar" aria-label="Primary">
+    <svg class="sidebar__logo" viewBox="0 0 36 36" aria-hidden="true">
+      <circle cx="18" cy="18" r="17" fill="none" stroke="#1F5FBF" stroke-width="2.5"/>
+      <path d="M10 20c2-6 6-9 8-9s3 3 1 6-6 4-8 2" fill="none" stroke="#1F5FBF" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="24" cy="12" r="2.4" fill="#E02020"/>
+    </svg>
+    <ul class="sidebar__nav">
+      <li><button class="sidebar__item" aria-label="Home" title="Home">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      </button></li>
+      <li><button class="sidebar__item sidebar__item--active" aria-label="Registration" title="Registration" aria-current="page">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Appointment" title="Appointment">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Doctor" title="Doctor">
+        <svg viewBox="0 0 24 24"><path d="M8 3v4a4 4 0 008 0V3"/><path d="M6 8v3a6 6 0 0012 0V8"/><circle cx="19" cy="17" r="3"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Patient" title="Patient">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5 21c0-4.4 3.1-8 7-8s7 3.6 7 8"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Billing" title="Billing">
+        <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><circle cx="7" cy="14" r="1"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Report" title="Report">
+        <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20V13"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Messages" title="Messages">
+        <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 11-3.6-6.7L21 4l-1 4.5c.6 1 1 2.2 1 3.5z"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Manual" title="Manual">
+        <svg viewBox="0 0 24 24"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M18 20a3 3 0 01-3-3"/></svg>
+      </button></li>
+    </ul>
+  </nav>
+
+  <div class="main">
+
+    <!-- ============ Header ============ -->
+    <header class="topbar">
+      <div class="topbar__crumb">
+        <button class="topbar__menu-btn" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="topbar__crumb-text">
+          <span class="topbar__crumb-home">Home</span>
+          <span class="topbar__crumb-sep">&gt;</span>
+          <span class="topbar__crumb-current">Registration</span>
+        </div>
+      </div>
+      <div class="topbar__actions">
+        <button class="btn btn-cancel" type="button">
+          Cancel
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <button class="btn btn-submit" type="submit" form="reg-form">
+          Submit
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============ Tabs ============ -->
+    <div class="tabs-bar">
+      <button class="tabs-hamburger" id="tabsToggle" aria-expanded="false" aria-controls="tabsNav" aria-label="Toggle registration steps">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="tabs" id="tabsNav" aria-label="Registration steps">
+        <a class="tabs__item tabs__item--active" href="#personal-info" aria-current="step">
+          Personal Information
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </a>
+        <a class="tabs__item" href="#doctor-referral">
+          Doctor/ Referral/ Payment
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+        </a>
+        <a class="tabs__item" href="#contact-person">
+          Contact Person
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+        </a>
+        <a class="tabs__item" href="#demographic">
+          Demographic
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+        </a>
+      </nav>
+    </div>
+
+    <!-- ============ Content ============ -->
+    <main class="content">
+      <div class="content__inner">
+
+        <!-- Search / New registration -->
+        <div class="search-bar">
+          <div class="search-bar__group">
+            <label class="search-bar__label" for="search-existing">Search Existing Client</label>
+            <input class="search-bar__field" id="search-existing" type="text">
+          </div>
+          <div class="search-bar__group search-bar__group--right">
+            <span class="search-bar__label">New Registration</span>
+            <button class="btn-apply" type="button">Apply</button>
+          </div>
+        </div>
+
+        <form id="reg-form">
+
+          <!-- ============ Personal Information ============ -->
+          <section class="panel" id="personal-info" aria-labelledby="personal-info-title">
+            <h2 class="panel__title" id="personal-info-title">Personal Information</h2>
+
+            <div class="personal-grid">
+
+              <!-- Left column -->
+              <div class="personal-grid__col">
+                <div class="field-row">
+                  <div class="field">
+                    <label class="field__label" for="ehr-no">eHR No.</label>
+                    <input class="field__input" id="ehr-no" type="text">
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="dhc-membership">DHC Membership No.</label>
+                    <input class="field__input" id="dhc-membership" type="text">
+                  </div>
+                </div>
+
+                <div class="field-row">
+                  <div class="field">
+                    <label class="field__label" for="chinese-name">Chinese Name</label>
+                    <input class="field__input" id="chinese-name" type="text" value="陳明">
+                  </div>
+                  <div class="field">
+                    <label class="field__label"><span class="field__required">*</span> English Name</label>
+                    <div class="name-pair">
+                      <input class="field__input field__input--required" aria-label="Surname" type="text" placeholder="Surname">
+                      <input class="field__input field__input--required" aria-label="Given Name" type="text" placeholder="Given Name">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field--other-row">
+                  <div class="field">
+                    <label class="field__label" for="other-name">Other Name</label>
+                    <input class="field__input" id="other-name" type="text" value="Eric">
+                  </div>
+                  <label class="checkbox">
+                    <input type="checkbox" id="single-name-indicator">
+                    Single Name Indicator
+                  </label>
+                </div>
+
+                <div class="field">
+                  <span class="field__label"><span class="field__required">*</span> Sex</span>
+                  <div class="radio-group" role="radiogroup" aria-label="Sex">
+                    <label class="radio">
+                      <input type="radio" name="sex" value="male" checked>
+                      Male
+                    </label>
+                    <label class="radio">
+                      <input type="radio" name="sex" value="female">
+                      Female
+                    </label>
+                    <label class="radio">
+                      <input type="radio" name="sex" value="unknown">
+                      Unknown
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right column -->
+              <div class="personal-grid__col">
+                <div class="field-row">
+                  <div class="field">
+                    <label class="field__label" for="document-type"><span class="field__required">*</span> Document Type</label>
+                    <div class="field__combo">
+                      <input class="field__input field__input--required" id="document-type" type="text" value="HKID Card">
+                      <button class="field__icon-btn" type="button" aria-label="Open document type list">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="hkic-no"><span class="field__required">*</span> HKIC No.</label>
+                    <div class="id-with-check">
+                      <input class="field__input field__input--required" id="hkic-no" type="text" value="A123456">
+                      <span class="check-digit">
+                        (<input class="field__input field__input--required" type="text" value="7" aria-label="Check digit">)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field-row field-row--3">
+                  <div class="field">
+                    <label class="field__label" for="hkic-symbol">HKIC Symobl</label>
+                    <div class="field__combo">
+                      <input class="field__input" id="hkic-symbol" type="text" value="A">
+                      <button class="field__icon-btn" type="button" aria-label="Open HKIC symbol list">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="document-number">Document Number</label>
+                    <input class="field__input" id="document-number" type="text" disabled>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="age">Age</label>
+                    <input class="field__input" id="age" type="text" disabled>
+                  </div>
+                </div>
+
+                <div class="field-row">
+                  <div class="field">
+                    <label class="field__label" for="dob"><span class="field__required">*</span> Date fo Birth</label>
+                    <div class="field__combo">
+                      <input class="field__input field__input--required" id="dob" type="text" value="01-Jan-1960">
+                      <button class="field__icon-btn" type="button" aria-label="Open calendar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="dob-precision">&nbsp;</label>
+                    <div class="field__combo">
+                      <input class="field__input field__input--required" id="dob-precision" type="text" value="Exact day, month, year">
+                      <button class="field__icon-btn" type="button" aria-label="Open date precision list">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="field-row">
+                  <div class="field">
+                    <label class="field__label" for="ethnicity"><span class="field__required">*</span> Ethnicity</label>
+                    <div class="field__combo">
+                      <input class="field__input field__input--required" id="ethnicity" type="text" value="Others">
+                      <button class="field__icon-btn" type="button" aria-label="Open ethnicity list">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="ethnicity-specify">&nbsp;</label>
+                    <input class="field__input field__input--required" id="ethnicity-specify" type="text" placeholder="Please specify">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <hr class="divider">
+
+          <!-- ============ Contact Information ============ -->
+          <section class="panel" id="contact-person" aria-labelledby="contact-info-title">
+            <h2 class="panel__title" id="contact-info-title">Contact Information</h2>
+
+            <div class="field-row field-row--4">
+              <div class="field">
+                <label class="field__label" for="mobile-no"><span class="field__required">*</span> Phone (Mobile)</label>
+                <input class="field__input field__input--required" id="mobile-no" type="tel" value="98765432">
+                <p class="field-note">Notification will be sent through SMS to mobile</p>
+              </div>
+              <div class="field">
+                <label class="field__label" for="home-no">Phone (Home)</label>
+                <input class="field__input" id="home-no" type="tel">
+              </div>
+              <div class="field">
+                <label class="field__label" for="office-no">Phone (Office)</label>
+                <input class="field__input" id="office-no" type="tel">
+              </div>
+              <div class="field">
+                <label class="field__label" for="other-phone">Phone (Other)</label>
+                <input class="field__input" id="other-phone" type="tel">
+              </div>
+            </div>
+
+            <div class="field-row" style="margin-top: var(--space-lg);">
+              <div class="field">
+                <label class="field__label" for="email">Email Address</label>
+                <input class="field__input" id="email" type="email" value="chanming@gmail.com">
+              </div>
+            </div>
+          </section>
+
+          <hr class="divider">
+
+          <!-- ============ Address ============ -->
+          <section class="panel" id="address" aria-labelledby="address-title">
+            <h2 class="panel__title" id="address-title">Address</h2>
+
+            <h3 class="subheading">Residential Address</h3>
+            <div class="adi-row">
+              <button class="btn btn-submit" type="button">Input Address from ADI</button>
+              <button class="btn btn-outline-green" type="button">Free Text Address</button>
+            </div>
+
+            <div class="address-box">
+              <div class="field-row field-row--4">
+                <div class="field">
+                  <label class="field__label" for="room-flat">Room/Flat</label>
+                  <input class="field__input" id="room-flat" type="text" value="A">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="floor">Floor</label>
+                  <input class="field__input" id="floor" type="text" value="88">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="block">Block</label>
+                  <input class="field__input" id="block" type="text" value="23">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="building">Building</label>
+                  <input class="field__input" id="building" type="text" value="Chan Ming Building">
+                </div>
+              </div>
+
+              <div class="field-row field-row--3">
+                <div class="field">
+                  <label class="field__label" for="estate">Estate / Village</label>
+                  <input class="field__input" id="estate" type="text" value="Mei Foo Sun Chuen">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="street-no">Street No.</label>
+                  <input class="field__input" id="street-no" type="text">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="street-road">Street / Road</label>
+                  <input class="field__input" id="street-road" type="text" value="Queen's Road Central">
+                </div>
+              </div>
+
+              <div class="field-row field-row--3">
+                <div class="field">
+                  <label class="field__label" for="sub-district">Sub-district</label>
+                  <input class="field__input" id="sub-district" type="text" value="West Kowloon Reclamation">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="district"><span class="field__required">*</span> District</label>
+                  <div class="field__combo">
+                    <input class="field__input field__input--required" id="district" type="text" value="Central &amp; Western District">
+                    <button class="field__icon-btn" type="button" aria-label="Open district list">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="area">Area</label>
+                  <input class="field__input" id="area" type="text">
+                </div>
+              </div>
+            </div>
+
+            <h3 class="subheading">Correspondence Address</h3>
+            <label class="checkbox" style="margin-bottom: var(--space-xl);">
+              <input type="checkbox" id="same-as-residential" checked>
+              Same as Residential Address
+            </label>
+
+            <div class="field">
+              <label class="field__label" for="remarks">Remarks</label>
+              <textarea class="textarea-field" id="remarks" rows="3"></textarea>
+            </div>
+          </section>
+
+          <div class="next-tab-wrap">
+            <button class="next-tab-btn" type="button">
+              Next Tab
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var toggle = document.getElementById('tabsToggle');
+    var tabsNav = document.getElementById('tabsNav');
+
+    toggle.addEventListener('click', function () {
+      var isOpen = tabsNav.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    tabsNav.addEventListener('click', function (e) {
+      var link = e.target.closest('.tabs__item');
+      if (!link) return;
+      document.querySelectorAll('.tabs__item').forEach(function (item) {
+        item.classList.remove('tabs__item--active');
+      });
+      link.classList.add('tabs__item--active');
+      if (window.matchMedia('(max-width: 1024px)').matches) {
+        tabsNav.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  })();
+</script>
+</body>
+</html>
