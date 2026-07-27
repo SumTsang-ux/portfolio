@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHC Home Registration — Demographic</title>
+<style>
+  :root{
+    /* Colors (from Figma tokens) */
+    --color-green: #00AB4C;
+    --color-white: #FFFFFF;
+    --color-text: #2E2E2E;
+    --color-text-disabled: #888888;
+    --color-text-muted: #707070;
+    --color-border: #DDDDDD;
+    --color-field-border: #AAAAAA;
+    --color-bg-grey: #F2F2F2;
+    --color-required-bg: #FFF6E5;
+    --color-error: #D02F2F;
+    --color-active-bg: rgba(0,171,76,0.1);
+
+    /* Typography */
+    --font-family: 'Roboto', Arial, Helvetica, sans-serif;
+    --fs-20: 22px;
+    --fs-16: 18px;
+    --fs-14: 16px;
+    --fs-13: 15px;
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 40px;
+
+    /* Radius */
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-pill: 16px;
+
+    --sidebar-width: 80px;
+    --header-height: 65px;
+    --tabs-height: 40px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    color: var(--color-text);
+    background: var(--color-white);
+    font-size: var(--fs-14);
+  }
+
+  ul{ list-style: none; margin:0; padding:0; }
+  button{ font-family: inherit; cursor: pointer; }
+
+  .app{
+    display: flex;
+    min-height: 100vh;
+    max-width: 1800px;
+    margin: 0 auto;
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
+  @media (min-width: 1801px){ body{ background: var(--color-bg-grey); } }
+
+  /* ---------------- Sidebar ---------------- */
+  .sidebar{
+    flex: 0 0 var(--sidebar-width);
+    width: var(--sidebar-width);
+    background: var(--color-white);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 12px;
+  }
+
+  .sidebar__logo{
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--color-green);
+    color: var(--color-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .sidebar__nav{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .sidebar__item{
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-disabled);
+    position: relative;
+  }
+
+  .sidebar__item svg{ width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+
+  .sidebar__item--active{ color: var(--color-green); }
+  .sidebar__item--active::before{
+    content:"";
+    position: absolute;
+    inset: -6px;
+    background: var(--color-active-bg);
+    border-radius: var(--radius-sm);
+  }
+  .sidebar__item--active svg{ fill: currentColor; stroke: none; position: relative; }
+
+  /* ---------------- Main column ---------------- */
+  .main{ flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+
+  /* ---------------- Header ---------------- */
+  .topbar{
+    height: var(--header-height);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-xl);
+    gap: var(--space-md);
+  }
+
+  .topbar__crumb{ display: flex; align-items: center; gap: var(--space-sm); min-width: 0; }
+
+  .topbar__menu-btn{
+    width: 32px; height: 32px;
+    border: none; border-radius: var(--radius-md);
+    background: var(--color-green);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; flex: 0 0 auto;
+  }
+  .topbar__menu-btn span{ display:block; width: 16px; height: 2px; border-radius: 1px; background: var(--color-white); }
+
+  .topbar__crumb-text{
+    display: flex; align-items: center; gap: var(--space-sm);
+    font-weight: 700; font-size: var(--fs-20); white-space: nowrap;
+  }
+  .topbar__crumb-home{ color: var(--color-text-muted); }
+  .topbar__crumb-sep{ color: var(--color-field-border); font-weight: 400; }
+  .topbar__crumb-current{ color: var(--color-green); }
+
+  .topbar__actions{ display: flex; gap: var(--space-md); flex: 0 0 auto; }
+  .btn{
+    height: 34px;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    font-size: var(--fs-16);
+    padding: 0 var(--space-lg);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    border: 1px solid transparent;
+  }
+  .btn-cancel{ background: var(--color-white); border-color: var(--color-error); color: var(--color-error); }
+  .btn-submit{ background: var(--color-green); border-color: var(--color-green); color: var(--color-white); }
+  .btn-outline-green{ background: var(--color-white); border-color: var(--color-green); color: var(--color-green); }
+  .btn svg{ width: 16px; height: 16px; }
+  .btn--disabled{ opacity: 0.5; pointer-events: none; }
+
+  /* ---------------- Tabs ---------------- */
+  .tabs-bar{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-white);
+  }
+
+  .tabs-hamburger{
+    display: none;
+    width: 32px; height: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 3px;
+    margin: 6px var(--space-lg);
+  }
+  .tabs-hamburger span{ display:block; width: 16px; height: 2px; background: var(--color-text); }
+
+  .tabs{ display: flex; width: 100%; overflow: hidden; transition: max-height 0.25s ease; }
+  .tabs__item{
+    flex: 1 1 0;
+    height: var(--tabs-height);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-xs);
+    background: var(--color-bg-grey);
+    border-right: 1px solid var(--color-border);
+    font-weight: 700; font-size: var(--fs-14);
+    color: var(--color-text);
+    white-space: nowrap;
+    padding: 0 var(--space-md);
+    text-decoration: none;
+  }
+  .tabs__item:last-child{ border-right: none; }
+  .tabs__item--active{ background: var(--color-green); border-color: var(--color-green); color: var(--color-white); }
+  .tabs__item svg{ width: 12px; height: 12px; flex: 0 0 auto; }
+
+  /* ---------------- Content ---------------- */
+  .content{ flex: 1 1 auto; display: flex; justify-content: center; padding: var(--space-xl) var(--space-xl) 80px; }
+  .content__inner{ width: 100%; max-width: 1600px; }
+
+  /* Patient summary bar */
+  .summary{
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    background: var(--color-bg-grey);
+    border-left: 4px solid var(--color-green);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+  }
+  .summary__avatar{
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 auto;
+  }
+  .summary__field{ display: flex; flex-direction: column; gap: 2px; }
+  .summary__label{ font-size: var(--fs-13); color: var(--color-text-muted); }
+  .summary__value{ font-size: var(--fs-14); color: var(--color-text); }
+  .summary__name{ flex: 0 0 auto; min-width: 220px; }
+
+  /* Section / panel */
+  .panel{ margin-bottom: var(--space-lg); }
+  .panel__title{
+    display: flex; align-items: center; gap: var(--space-md);
+    font-weight: 700; font-size: var(--fs-16); color: var(--color-text);
+    margin: 0 0 var(--space-lg) 0;
+  }
+  .panel__title::before{
+    content:""; display:block; width: 4px; height: 22px;
+    background: var(--color-green); border-radius: 2px; flex: 0 0 auto;
+  }
+
+  .subheading{ font-weight: 700; font-size: var(--fs-14); margin: 0 0 var(--space-md) 0; }
+  .subheading-row{ display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-md); }
+  .subheading-row .subheading{ margin-bottom: 0; }
+
+  .two-col{ display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: var(--space-xl); }
+
+  .divider{ border: none; border-top: 1px solid var(--color-border); margin: var(--space-lg) 0; }
+
+  /* Field rows */
+  .field-row{ display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .field-row--3{ grid-template-columns: repeat(3, 1fr); }
+  .field-row--4{ grid-template-columns: repeat(4, 1fr); }
+  .field-row--title-name{ grid-template-columns: 140px 1fr 1fr; }
+
+  .field{ display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+  .field__label{ font-size: var(--fs-14); color: var(--color-text); }
+  .field__required{ color: var(--color-error); margin-right: 2px; }
+
+  .field__input{
+    height: 38px;
+    background: var(--color-white);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-sm);
+    font-size: var(--fs-16);
+    color: var(--color-text);
+    width: 100%;
+  }
+  .field__input::placeholder{ color: var(--color-text-muted); }
+  .field__input--required{ background: var(--color-required-bg); }
+
+  .field__combo{ display: flex; align-items: stretch; }
+  .field__combo .field__input{ border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-right: none; }
+  .field__icon-btn{
+    flex: 0 0 34px; width: 34px;
+    background: var(--color-green); border: none;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    display: flex; align-items: center; justify-content: center; color: var(--color-white);
+  }
+  .field__icon-btn svg{ width: 14px; height: 14px; }
+
+  .name-pair{ display: flex; gap: var(--space-sm); }
+
+  .field--other-row{ display: flex; align-items: flex-end; gap: var(--space-lg); }
+  .field--other-row .field{ flex: 1 1 auto; }
+
+  .checkbox{
+    display: flex; align-items: center; gap: var(--space-sm);
+    font-size: var(--fs-16); color: var(--color-text); cursor: pointer;
+    white-space: nowrap;
+  }
+  .checkbox input{ width: 18px; height: 18px; accent-color: var(--color-green); margin: 0; flex: 0 0 auto; }
+
+  .radio-group{ display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; }
+  .radio{
+    display: flex; align-items: center; gap: var(--space-sm);
+    font-size: var(--fs-16); color: var(--color-text); cursor: pointer;
+    white-space: nowrap;
+  }
+  .radio input{ width: 20px; height: 20px; accent-color: var(--color-green); margin: 0; flex: 0 0 auto; }
+
+  .field__input:disabled{ background: var(--color-bg-grey); color: var(--color-text-muted); }
+
+  .field__input-unit{ position: relative; }
+  .field__input-unit .field__input{ padding-right: 90px; }
+  .field__unit{
+    position: absolute; right: var(--space-sm); top: 50%; transform: translateY(-50%);
+    font-size: var(--fs-14); color: var(--color-text-muted); pointer-events: none;
+  }
+
+  /* Household Area + Type of Housing on one row */
+  .household-row{
+    display: grid;
+    grid-template-columns: minmax(220px, 340px) 1fr;
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  /* Private / Public / Others radios + specify field on one row */
+  .housing-type-row{
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: var(--space-lg);
+  }
+  .housing-type-row .radio-group{ flex: 0 0 auto; flex-wrap: nowrap; }
+  .housing-type-row .field__input{ flex: 1 1 200px; min-width: 160px; }
+
+  /* Add-person pill button */
+  .btn-add-person{
+    width: 60px; height: 24px;
+    background: var(--color-green);
+    border: 1px solid var(--color-green);
+    border-radius: 12px;
+    color: var(--color-white);
+    font-size: var(--fs-20);
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+
+  .adi-row{ display: flex; gap: var(--space-md); flex-wrap: wrap; margin-bottom: var(--space-lg); }
+  .btn-adi{ flex: 1 1 260px; max-width: 280px; justify-content: center; }
+
+  .step-nav{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--space-xl);
+  }
+  .step-nav__btn{
+    background: none; border: none;
+    display: flex; align-items: center; gap: var(--space-sm);
+    color: var(--color-green); font-size: var(--fs-20); font-weight: 400;
+  }
+  .step-nav__btn svg{ width: 22px; height: 22px; }
+
+  .visually-hidden{
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* ---------------- Responsive ---------------- */
+  @media (max-width: 1024px){
+    .topbar{ padding: 0 var(--space-lg); }
+    .field-row{ grid-template-columns: repeat(2, 1fr); }
+    .field-row--3{ grid-template-columns: repeat(2, 1fr); }
+    .field-row--4{ grid-template-columns: repeat(2, 1fr); }
+    .field-row--title-name{ grid-template-columns: 1fr 1fr; }
+    .two-col{ grid-template-columns: 1fr; gap: var(--space-lg); }
+    .household-row{ grid-template-columns: 1fr; gap: var(--space-lg); }
+    .housing-type-row{ flex-wrap: wrap; }
+    .content{ padding: var(--space-lg); }
+
+    .tabs-hamburger{ display: flex; }
+    .tabs-bar{ flex-direction: column; align-items: stretch; padding: 0; }
+    .tabs{ flex-direction: column; max-height: 0; }
+    .tabs.is-open{ max-height: 320px; }
+    .tabs__item{ border-right: none; border-bottom: 1px solid var(--color-border); }
+  }
+
+  @media (max-width: 768px){
+    .sidebar{ display: none; }
+    .topbar{ padding: 0 var(--space-md); }
+    .topbar__crumb-text{ font-size: 18px; }
+    .content{ padding: var(--space-md); }
+    .summary{ flex-direction: column; align-items: flex-start; }
+    .summary__name{ min-width: 0; }
+    .btn{ padding: 0 var(--space-md); font-size: 14px; }
+    .field-row, .field-row--3, .field-row--4, .field-row--title-name{ grid-template-columns: 1fr; }
+    .name-pair{ flex-direction: column; }
+    .field--other-row{ flex-direction: column; align-items: stretch; }
+    .adi-row{ flex-direction: column; }
+    .btn-adi{ max-width: none; }
+    .step-nav{ flex-direction: column; gap: var(--space-md); align-items: stretch; }
+    .step-nav__btn{ justify-content: center; }
+    .household-row{ grid-template-columns: 1fr; gap: var(--space-lg); }
+    .housing-type-row{ flex-wrap: wrap; }
+    .housing-type-row .radio-group{ flex-wrap: wrap; }
+    .housing-type-row .field__input{ flex: 1 1 100%; }
+    .radio-group{ gap: var(--space-md); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ Sidebar ============ -->
+  <nav class="sidebar" aria-label="Primary">
+    <div class="sidebar__logo" aria-hidden="true">DHC</div>
+    <ul class="sidebar__nav">
+      <li><button class="sidebar__item" aria-label="Manual" title="Manual">
+        <svg viewBox="0 0 24 24"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M18 20a3 3 0 01-3-3"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.14-1.4l2-1.6-2-3.4-2.4 1a7 7 0 00-2.4-1.4L13.6 2h-3.2l-.4 2.2a7 7 0 00-2.4 1.4l-2.4-1-2 3.4 2 1.6A7 7 0 005 12c0 .5.05.9.14 1.4l-2 1.6 2 3.4 2.4-1a7 7 0 002.4 1.4l.4 2.2h3.2l.4-2.2a7 7 0 002.4-1.4l2.4 1 2-3.4-2-1.6c.09-.5.14-.9.14-1.4z"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Report" title="Report">
+        <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20V13"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Billing" title="Billing">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Doctor" title="Doctor">
+        <svg viewBox="0 0 24 24"><path d="M8 3v4a4 4 0 008 0V3"/><path d="M6 8v3a6 6 0 0012 0V8"/><circle cx="19" cy="17" r="3"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Appointment" title="Appointment">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Booking" title="Booking">
+        <svg viewBox="0 0 24 24"><path d="M4 4h13a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/></svg>
+      </button></li>
+      <li><button class="sidebar__item sidebar__item--active" aria-label="Registration" title="Registration" aria-current="page">
+        <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
+      </button></li>
+      <li><button class="sidebar__item" aria-label="Home" title="Home">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      </button></li>
+    </ul>
+  </nav>
+
+  <div class="main">
+
+    <!-- ============ Header ============ -->
+    <header class="topbar">
+      <div class="topbar__crumb">
+        <button class="topbar__menu-btn" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="topbar__crumb-text">
+          <span class="topbar__crumb-home">Home</span>
+          <span class="topbar__crumb-sep">&gt;</span>
+          <span class="topbar__crumb-current">Registration</span>
+        </div>
+      </div>
+      <div class="topbar__actions">
+        <button class="btn btn-cancel" type="button">
+          Cancel
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <button class="btn btn-submit" type="submit" form="contact-person-form">
+          Submit
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============ Tabs ============ -->
+    <div class="tabs-bar">
+      <button class="tabs-hamburger" id="tabsToggle" aria-expanded="false" aria-controls="tabsNav" aria-label="Toggle registration steps">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="tabs" id="tabsNav" aria-label="Registration steps">
+        <a class="tabs__item" href="#personal-info">Personal Information</a>
+        <a class="tabs__item" href="#doctor-referral-payment">Doctor/ Referral/ Payment</a>
+        <a class="tabs__item" href="#contact-person">Contact Person</a>
+        <a class="tabs__item tabs__item--active" href="#demographic" aria-current="step">
+          Demographic
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </a>
+      </nav>
+    </div>
+
+    <!-- ============ Content ============ -->
+    <main class="content">
+      <div class="content__inner">
+
+        <!-- Patient summary bar -->
+        <div class="summary">
+          <img class="summary__avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 46'%3E%3Ccircle cx='23' cy='23' r='23' fill='%23cccccc'/%3E%3Ccircle cx='23' cy='18' r='9' fill='%23999999'/%3E%3Cpath d='M6 44c0-11 8-18 17-18s17 7 17 18' fill='%23999999'/%3E%3C/svg%3E" alt="Patient photo">
+          <div class="summary__field summary__name">
+            <span class="summary__value" lang="zh">陳大明</span>
+            <span class="summary__value">CHAN, Tai Ming Eric</span>
+          </div>
+          <div class="summary__field">
+            <span class="summary__label">Sex</span>
+            <span class="summary__value">Male</span>
+          </div>
+          <div class="summary__field">
+            <span class="summary__label">Age</span>
+            <span class="summary__value">65</span>
+          </div>
+          <div class="summary__field">
+            <span class="summary__label">DOB</span>
+            <span class="summary__value">01-Jan-1965</span>
+          </div>
+          <div class="summary__field">
+            <span class="summary__label">Document Type</span>
+            <span class="summary__value">HKIC</span>
+          </div>
+          <div class="summary__field">
+            <span class="summary__label">HKIC no.</span>
+            <span class="summary__value">W234567(8)</span>
+          </div>
+        </div>
+
+        <form id="demographic-form">
+
+          <!-- ============ Demographic / Religion ============ -->
+          <div class="two-col">
+            <section class="panel" aria-labelledby="demographic-title">
+              <h2 class="panel__title" id="demographic-title">Demographic</h2>
+
+              <div class="field">
+                <label class="field__label" for="marital-status">Marital Status</label>
+                <div class="field__combo">
+                  <input class="field__input" id="marital-status" type="text">
+                  <button class="field__icon-btn" type="button" aria-label="Open marital status list">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="field" style="margin-top: var(--space-lg);">
+                <span class="field__label">No. of Children</span>
+                <div class="field-row field-row--3" style="margin-bottom: 0;">
+                  <input class="field__input" type="text" placeholder="Male" aria-label="Number of male children">
+                  <input class="field__input" type="text" placeholder="Female" aria-label="Number of female children">
+                  <input class="field__input" type="text" placeholder="Total" aria-label="Total number of children" disabled>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" aria-labelledby="religion-title">
+              <h2 class="panel__title" id="religion-title">Religion</h2>
+
+              <div class="field">
+                <label class="field__label" for="religion">Religion</label>
+                <div class="field__combo">
+                  <input class="field__input" id="religion" type="text">
+                  <button class="field__icon-btn" type="button" aria-label="Open religion list">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                </div>
+                <input class="field__input" type="text" aria-label="Religion specify" style="margin-top: var(--space-sm);">
+              </div>
+            </section>
+          </div>
+
+          <hr class="divider">
+
+          <!-- ============ Household ============ -->
+          <section class="panel" aria-labelledby="household-title">
+            <h2 class="panel__title" id="household-title">Household</h2>
+
+            <div class="field" style="margin-bottom: var(--space-lg);">
+              <span class="field__label">Household Member</span>
+              <div class="radio-group">
+                <label class="radio"><input type="radio" name="household-member" value="live-alone"> Live alone</label>
+                <label class="radio"><input type="radio" name="household-member" value="live-with"> Live with</label>
+              </div>
+            </div>
+
+            <div class="household-row">
+              <div class="field">
+                <label class="field__label" for="household-area">Household Area</label>
+                <div class="field__input-unit">
+                  <input class="field__input" id="household-area" type="text">
+                  <span class="field__unit">Square feet</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <span class="field__label">Type of Housing</span>
+                <div class="housing-type-row">
+                  <div class="radio-group">
+                    <label class="radio"><input type="radio" name="housing-type" value="private"> Private</label>
+                    <label class="radio"><input type="radio" name="housing-type" value="public"> Public</label>
+                    <label class="radio"><input type="radio" name="housing-type" value="others"> Others</label>
+                  </div>
+                  <input class="field__input" type="text" aria-label="Type of housing specify">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <hr class="divider">
+
+          <!-- ============ Employment Status / Education ============ -->
+          <div class="two-col">
+            <section class="panel" aria-labelledby="employment-title">
+              <h2 class="panel__title" id="employment-title">Employment Status</h2>
+
+              <div class="field">
+                <span class="field__label">Empolyment Status</span>
+                <div class="radio-group">
+                  <label class="radio"><input type="radio" name="employment-status" value="employed"> Employed</label>
+                  <label class="radio"><input type="radio" name="employment-status" value="unemployed"> Unemployed</label>
+                  <label class="radio"><input type="radio" name="employment-status" value="retired"> Retired</label>
+                  <label class="radio"><input type="radio" name="employment-status" value="others"> Others</label>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" aria-labelledby="education-title">
+              <h2 class="panel__title" id="education-title">Education</h2>
+
+              <div class="field">
+                <span class="field__label">Education</span>
+                <div class="radio-group">
+                  <label class="radio"><input type="radio" name="education" value="no-formal-education"> No formal education</label>
+                  <label class="radio"><input type="radio" name="education" value="primary"> Primary</label>
+                  <label class="radio"><input type="radio" name="education" value="secondary"> Secondary</label>
+                  <label class="radio"><input type="radio" name="education" value="tertiary"> Tertiary</label>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <nav class="step-nav" aria-label="Registration step navigation" style="justify-content: flex-start;">
+            <button class="step-nav__btn step-nav__btn--prev" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+              Previous Tab
+            </button>
+          </nav>
+
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var toggle = document.getElementById('tabsToggle');
+    var tabsNav = document.getElementById('tabsNav');
+
+    toggle.addEventListener('click', function () {
+      var isOpen = tabsNav.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    tabsNav.addEventListener('click', function (e) {
+      var link = e.target.closest('.tabs__item');
+      if (!link) return;
+      if (window.matchMedia('(max-width: 1024px)').matches) {
+        tabsNav.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  })();
+</script>
+</body>
+</html>
